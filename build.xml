@@ -102,6 +102,10 @@
             <fileset dir="./mac/Flex Projector.app/" casesensitive="yes"/>
         </touch>
         
+        <zip destfile="./mac/FlexProjectorMac.zip" level="9">
+            <zipfileset filemode="755" dir="mac/Flex Projector.app" prefix="Flex Projector.app" />
+        </zip>
+        
         <!-- Zip jar file in dist folder -->
         <zip destfile="FlexProjectorJar.zip">
             <fileset dir="./dist/" includes="FlexProjector.jar"/>
@@ -118,9 +122,14 @@
         <!-- Zip the generated exe file -->
         <zip destfile="win/FlexProjectorWin.zip">
             <fileset dir="." includes="win/FlexProjector.exe"/>
-        </zip>
-        
-       
-        
+        </zip>        
+    </target>
+    
+    <target name="-post-clean">
+        <delete file="win/FlexProjector.exe"/>
+        <delete file="win/FlexProjectorWin.zip"/>
+        <delete file="FlexProjectorJar.zip"/>
+        <delete file="mac/Flex Projector.app/Contents/Resources/Java/FlexProjector.jar"/>
+        <delete file="mac/FlexProjectorMac.zip"/>
     </target>
 </project>
