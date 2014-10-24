@@ -1,0 +1,230 @@
+package ika.gui;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.KeyStroke;
+/*
+ * SaveFilePanel.java
+ *
+ * Created on December 20, 2007, 8:04 PM
+ */
+
+/**
+ * A modal dialog to ask whether a document should be saved or not.
+ * @author  Bernhard Jenny, Institute of Cartography, ETH Zurich
+ */
+public class SaveFilePanel extends javax.swing.JPanel {
+    
+    public enum SaveResult {SAVE, DONTSAVE, CANCEL};
+    
+    public static SaveResult showSaveDialogForNamedDocument(
+            java.awt.Frame parent,
+            String documentName) {
+        return new SaveFilePanel(documentName).showSaveDialog(parent);
+    }
+
+    public static SaveResult showSaveDialog(
+            java.awt.Frame parent,
+            String message) {
+        SaveFilePanel saveFilePanel = new SaveFilePanel("");
+        saveFilePanel.questionLabel.setText(message);
+        return saveFilePanel.showSaveDialog(parent);
+    }
+
+    private JDialog dialog = null;
+    
+    private SaveResult result = SaveResult.CANCEL;
+
+    /** Creates new form SaveFilePanel */
+    private SaveFilePanel(String documentName) {
+        initComponents();
+
+        if (documentName == null)
+            return;
+        documentName = documentName.trim();
+        if (documentName.length() == 0)
+            return;
+
+        String str = this.questionLabel.getText();
+        int endIndex = str.indexOf('?');
+        str = str.substring(0, endIndex) + " \"" + documentName + "\"?</html>";
+        this.questionLabel.setText(str);
+    }
+
+    private ActionListener actionListener = new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+            if (e.getSource() == cancelButton) {
+                result = SaveResult.CANCEL;
+            } else if (e.getSource() == saveButton) {
+                result = SaveResult.SAVE;
+            } else if (e.getSource() == dontSaveButton) {
+                result = SaveResult.DONTSAVE;
+            }
+            dialog.setVisible(false);
+        }
+    };
+    
+    
+    private SaveResult showSaveDialog(java.awt.Frame parent) {
+        
+        assert dialog == null;
+
+        if (parent == null) {
+            parent = ika.gui.GUIUtil.getFrontMostFrame();
+        }
+
+        try {
+            dialog = new JDialog(parent, true);
+            dialog.getContentPane().add(this, BorderLayout.CENTER);
+            
+            // window title
+            dialog.setTitle(ika.app.ApplicationInfo.getApplicationName());
+            
+            // OK button
+            saveButton.registerKeyboardAction(actionListener, "OK",
+                    KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ENTER,
+                    0 , true), JComponent.WHEN_IN_FOCUSED_WINDOW);
+            dialog.getRootPane().setDefaultButton(saveButton);
+            
+            // cancel button
+            cancelButton.registerKeyboardAction(actionListener, "EscapeKey",
+                    KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE,
+                    0 , true), JComponent.WHEN_IN_FOCUSED_WINDOW);
+            KeyStroke cmdPeriod = KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_PERIOD,
+                    java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+            cancelButton.registerKeyboardAction(actionListener, "CommandPeriod",
+                    cmdPeriod, JComponent.WHEN_IN_FOCUSED_WINDOW);
+            cancelButton.requestFocusInWindow();
+            
+            // Don't-Save-Button reacts on command-D
+            KeyStroke cmdD = KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_D,
+                    java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+            dontSaveButton.registerKeyboardAction(actionListener, "CommandD",
+                    cmdD, JComponent.WHEN_IN_FOCUSED_WINDOW);
+            
+            // size
+            dialog.pack();
+            dialog.setResizable(false);
+            
+            // location
+            Dimension screenDim = dialog.getToolkit().getScreenSize();
+            Dimension dialogDim = dialog.getSize();
+            dialog.setLocation((screenDim.width - dialogDim.width) / 2,
+                    (screenDim.height - dialogDim.height) / 2 - 100);
+            
+            dialog.setVisible(true);
+            
+        } catch (Exception exc) {
+            exc.printStackTrace();
+        } finally {
+            if (dialog != null) {
+                dialog.setVisible(false);
+                dialog.dispose();
+                dialog = null;
+            }
+        }
+        
+        return this.result;
+    }
+    
+    /** This method is called from within the constructor to
+     * initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is
+     * always regenerated by the Form Editor.
+     */
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
+
+        iconLabel = new javax.swing.JLabel();
+        questionLabel = new javax.swing.JLabel();
+        infoLabel = new javax.swing.JLabel();
+        dontSaveButton = new javax.swing.JButton();
+        cancelButton = new javax.swing.JButton();
+        saveButton = new javax.swing.JButton();
+
+        setBorder(javax.swing.BorderFactory.createEmptyBorder(13, 18, 13, 16));
+        setLayout(new java.awt.GridBagLayout());
+
+        Icon icon = ika.utils.ApplicationIcon.getApplicationIcon();
+        iconLabel.setIcon(icon);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 20);
+        add(iconLabel, gridBagConstraints);
+
+        questionLabel.setFont(new java.awt.Font("Lucida Grande", 1, 13)); // NOI18N
+        questionLabel.setText("<html>Do you want to save the changes you made in <br>the document?</html>");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
+        add(questionLabel, gridBagConstraints);
+
+        infoLabel.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        infoLabel.setText("Your changes will be lost if you don't save them.");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(9, 5, 13, 0);
+        add(infoLabel, gridBagConstraints);
+
+        dontSaveButton.setText("Don't Save");
+        dontSaveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttenClicked(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        add(dontSaveButton, gridBagConstraints);
+
+        cancelButton.setText("Cancel");
+        cancelButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttenClicked(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 40, 0, 2);
+        add(cancelButton, gridBagConstraints);
+
+        saveButton.setText("Save...");
+        saveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttenClicked(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        add(saveButton, gridBagConstraints);
+    }// </editor-fold>//GEN-END:initComponents
+    
+    private void buttenClicked(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttenClicked
+        actionListener.actionPerformed(evt);
+    }//GEN-LAST:event_buttenClicked
+    
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cancelButton;
+    private javax.swing.JButton dontSaveButton;
+    private javax.swing.JLabel iconLabel;
+    private javax.swing.JLabel infoLabel;
+    private javax.swing.JLabel questionLabel;
+    private javax.swing.JButton saveButton;
+    // End of variables declaration//GEN-END:variables
+    
+}

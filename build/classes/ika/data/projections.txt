@@ -1,0 +1,44 @@
+Aitoff, true, approx
+Arden-Close, false
+Boggs Eumorphic, false
+Cylindrical Equal-Area, true
+Craster Parabolic (Putnins P4), false
+Denoyer Semi-elliptical, true, approx
+Eckert I, false
+Eckert III, true, approx
+Eckert IV, true
+Eckert V, true
+Eckert-Greifendorff, false, approx
+Equidistant Cylindrical (Plate Carrée), true
+Fahey, true, approx
+Foucaut, false, 
+Foucaut Sinusoidal, false
+Gall (Gall Stereographic), false
+Ginzburg VIII (TsNIIGAiK 1944), true
+Goode Homolosine, false
+Hammer, true, approx
+Hölzel, false, approx
+Kavrayskiy I, false
+Kavrayskiy V, true
+Kavrayskiy VII, true
+Larrivée, true, approx
+McBryde-Thomas Flat-Pole Sine (No. 2), false
+Mercator, true
+Miller Cylindrical I, true
+Mollweide, true
+Natural Earth, true, approx
+Nell-Hammer, true
+Putnins P1, true
+Putnins P4', false
+Putnins P5', false
+Quartic Authalic, false
+Robinson, true
+Sinusoidal, true
+van der Grinten (I), true, approx
+Wagner II, false
+Wagner III, false
+Wagner VI, true
+Wagner VII, true, approx
+Winkel I, true
+Winkel II, true, approx
+Winkel Tripel, true, approx
