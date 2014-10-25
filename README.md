@@ -5,4 +5,4 @@ Flex Projector creates custom world map projections
 
 http://www.flexprojector.com
 
-Flex Projector uses [JMapProjLib](JMapProjLib).
+Flex Projector uses [JMapProjLib](https://github.com/OSUCartography/JMapProjLib).
