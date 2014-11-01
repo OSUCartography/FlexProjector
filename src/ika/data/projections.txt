@@ -1,6 +1,7 @@
 Aitoff, true, approx
 Arden-Close, false
 Boggs Eumorphic, false
+Compact Miller, true
 Cylindrical Equal-Area, true
 Craster Parabolic (Putnins P4), false
 Denoyer Semi-elliptical, true, approx
