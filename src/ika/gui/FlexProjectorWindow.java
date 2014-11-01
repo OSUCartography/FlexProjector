@@ -3,12 +3,13 @@
  *
  * Created on 23. August 2004, 20:50
  */
-
 package ika.gui;
 
 import com.jhlabs.map.Ellipsoid;
 import com.jhlabs.map.MapMath;
+import com.jhlabs.map.proj.EquidistantCylindricalProjection;
 import com.jhlabs.map.proj.Projection;
+import com.sun.tools.javac.main.JavacOption;
 import ika.geo.*;
 import ika.geo.FlexProjectorModel.DisplayModel;
 import ika.geo.clipboard.GeoTransferable;
@@ -18,6 +19,7 @@ import ika.map.tools.*;
 import ika.proj.DesignProjection;
 import ika.proj.FlexMixProjection;
 import ika.proj.FlexProjection;
+import ika.proj.ProjectionsManager;
 import ika.proj.SerializableProjection;
 import ika.utils.*;
 import java.awt.*;
@@ -29,21 +31,24 @@ import java.net.MalformedURLException;
 import java.text.DecimalFormat;
 import java.util.*;
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 /**
  * The main document window.
- * @author  Bernhard Jenny, Institute of Cartography, ETH Zurich.
+ *
+ * @author Bernhard Jenny, Institute of Cartography, ETH Zurich.
  */
-public class FlexProjectorWindow extends MainWindow 
+public class FlexProjectorWindow extends MainWindow
         implements RenderParamsProvider {
-    
+
     ProjDistortionTable distortionTable = null;
 
     private DistortionProfilesManager distortionProfilesManager = null;
-    
+
     private CurvesManager curvesManager = null;
-   
+
     private ProjectionBrewerPanel projectionBrewerPanel;
+
     /**
      * Creates new form FlexProjectorWindow
      */
@@ -54,44 +59,44 @@ public class FlexProjectorWindow extends MainWindow
         getContentPane().add(projectionBrewerPanel, java.awt.BorderLayout.EAST);
         this.initMenus();
     }
-    
+
     @Override
     protected boolean init() {
 
-        Action showAllAction = new AbstractAction(){
+        Action showAllAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               mapComponent.showAll();
+                mapComponent.showAll();
             }
         };
-        ika.gui.MenuUtils.registerMenuShortcut("showAllAction1", showAllAction, 
+        ika.gui.MenuUtils.registerMenuShortcut("showAllAction1", showAllAction,
                 KeyEvent.VK_0, this);
-        ika.gui.MenuUtils.registerMenuShortcut("showAllAction2", showAllAction, 
+        ika.gui.MenuUtils.registerMenuShortcut("showAllAction2", showAllAction,
                 KeyEvent.VK_NUMPAD0, this);
-        
-        Action zoomInAction = new AbstractAction(){
+
+        Action zoomInAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               mapComponent.zoomIn();
+                mapComponent.zoomIn();
             }
         };
-        ika.gui.MenuUtils.registerMenuShortcut("zoomInAction", zoomInAction, 
+        ika.gui.MenuUtils.registerMenuShortcut("zoomInAction", zoomInAction,
                 KeyEvent.VK_PLUS | KeyEvent.SHIFT_MASK, this);
-        
+
         final FlexProjectorModel flexProjectorModel = new FlexProjectorModel();
-        
+
         // pass a parent GeoSet to the MapComponent
         this.mapComponent.setGeoSet(flexProjectorModel);
-        
+
         // set background color of MapComponent
         this.mapComponent.setBackground(FlexProjectorPreferencesPanel.getMapBackgroundColor());
-        
+
         // no interpolation for rendering raster images
         this.mapComponent.setImageRenderingHint(
                 RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        
+
         this.projectionBrewerPanel.setModel(flexProjectorModel);
-        
+
         // add event listener that updates menus when the design projection 
         // changes, and updates the enabled state of the flex curve tab, which
         // is only useful for flex projections.
@@ -112,7 +117,7 @@ public class FlexProjectorWindow extends MainWindow
 
         // add listener to map that displays the coordinates of the current
         // mouse position
-        this.mapComponent.addMouseMotionListener( new MapToolMouseMotionListener() {
+        this.mapComponent.addMouseMotionListener(new MapToolMouseMotionListener() {
             @Override
             public void mouseMoved(Point2D.Double xy, MapComponent mapComponent) {
                 Projection proj = getProjectionClone();
@@ -123,19 +128,19 @@ public class FlexProjectorWindow extends MainWindow
                     return;
                 }
                 try {
-                    proj = (Projection)proj.clone();
+                    proj = (Projection) proj.clone();
                     proj.initialize();
 
                     // normalize the flex projection before projecting in the 
                     // inverse direction.
                     if (proj instanceof FlexProjection) {
-                        ((FlexProjection)proj).getModel().normalize();
+                        ((FlexProjection) proj).getModel().normalize();
                     }
-                    
+
                     Point2D.Double lonLat = new Point2D.Double();
                     proj.inverseTransform(xy, lonLat);
                     coordinatesInfoPanel.setCoordinates(lonLat.x, lonLat.y, xy.x, xy.y);
-                    
+
                     // distortion
                     ika.proj.ProjectionFactors pf = new ika.proj.ProjectionFactors();
                     pf.compute(proj, Math.toRadians(lonLat.x), Math.toRadians(lonLat.y), 1e-5);
@@ -147,26 +152,25 @@ public class FlexProjectorWindow extends MainWindow
                 }
             }
         });
-        
+
         // add listener to map that displays the scale of the map
-        this.mapComponent.addScaleChangeHandler( new ScaleChangeHandler() {
+        this.mapComponent.addScaleChangeHandler(new ScaleChangeHandler() {
             @Override
             public void scaleChanged(MapComponent mapComponent,
                     double currentMapScaleFactor, double currentMapScaleNumber) {
                 coordinatesInfoPanel.setScale(currentMapScaleNumber);
             }
         });
-        
+
         // specify the format of displayed coordinates
-        this.mapComponent.setCoordinateFormatter(new CoordinateFormatter
-                ("###,##0.#", "###,##0.#", 1));
-       
+        this.mapComponent.setCoordinateFormatter(new CoordinateFormatter("###,##0.#", "###,##0.#", 1));
+
         // register this object so that rendering parameters can be customized.
         this.mapComponent.setRenderParamsProvider(this);
-        
+
         // add a MapEventListener: When the map changes, the dirty
         // flag is set and the Save menu item updated.
-        MapEventListener mel = new MapEventListener(){
+        MapEventListener mel = new MapEventListener() {
             @Override
             public void mapEvent(MapEvent evt) {
                 if (mapComponent.canUndo()) {
@@ -175,28 +179,28 @@ public class FlexProjectorWindow extends MainWindow
                     setDocumentClean();
                 }
                 updateAllMenus();
-                FlexProjectorModel model = (FlexProjectorModel)mapComponent.getGeoSet();
+                FlexProjectorModel model = (FlexProjectorModel) mapComponent.getGeoSet();
                 projectionBrewerPanel.setModel(model);
-            } 
+            }
         };
         // register the MapEventListener to be informed whenever the map changes.
         GeoSetBroadcaster.addMapEventListener(mel, this.mapComponent.getGeoSet());
-        
+
         // set the initial tool
         this.mapComponent.setMapTool(new PanTool(this.mapComponent));
-        
+
         // maximise the size of this window. Fill the primary screen.
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        
+
         // setup the distortion table
-        this.distortionTable = new ProjDistortionTable(flexProjectorModel, 
+        this.distortionTable = new ProjDistortionTable(flexProjectorModel,
                 this.projectionBrewerPanel);
         this.projectionBrewerPanel.addFlexListener(this.distortionTable);
         this.distortionTableScrollPane.setViewportView(this.distortionTable);
         this.mainSplitPane.setDividerLocation(0.8);
         this.distortionTableScrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER,
-            this.tableInfoButton);
-        
+                this.tableInfoButton);
+
         // setup distortion profiles
         this.distortionProfilesManager = new DistortionProfilesManager(
                 vertProfilesMap, horProfilesMap, flexProjectorModel);
@@ -207,7 +211,7 @@ public class FlexProjectorWindow extends MainWindow
         distortionProfilesManager.setLat(this.latProfileSlider.getValue());
         distortionProfilesManager.setLon(this.lonProfileSlider.getValue());
         this.projectionBrewerPanel.setDistortionProfilesManager(this.distortionProfilesManager);
-        
+
         // setup curves manager
         this.curvesManager = new CurvesManager(curvesMap);
 
@@ -215,25 +219,25 @@ public class FlexProjectorWindow extends MainWindow
         this.curvesManager.setFlexProjection(flexProj);
         this.curvesMap.getPageFormat().setVisible(false);
         this.projectionBrewerPanel.addFlexListener(this.curvesManager);
-        
+
         // layout this window after the divider of split panes has been set and
         // after the window has been maximized
         this.validate();
-        
+
         // compute the profiles after the window has been layed out
         distortionProfilesManager.updateDistortionProfiles(false, flexProjectorModel.getDesignProjection());
         distortionProfilesManager.updateDistortionProfiles(true, flexProjectorModel.getDesignProjection());
-        
+
         // add a window listener that updates the menus when the
         // state of the window changes (minimized, close, focus lost, activated, etc.)
         WindowListener windowListener = new WindowListener() {
-            
+
             public void windowChanged(WindowEvent e) {
-                FlexProjectorWindow mainWindow = (FlexProjectorWindow)e.getWindow();
+                FlexProjectorWindow mainWindow = (FlexProjectorWindow) e.getWindow();
                 mainWindow.updateAllMenus();
                 MacWindowsManager.updateFramelessMenuBar();
             }
-            
+
             @Override
             public void windowOpened(WindowEvent e) {
                 this.windowChanged(e);
@@ -265,10 +269,10 @@ public class FlexProjectorWindow extends MainWindow
             @Override
             public void windowDeactivated(WindowEvent e) {
                 this.windowChanged(e);
-            }  
+            }
         };
         this.addWindowListener(windowListener);
-        
+
         // intialize the page format, which will be used to export to graphics
         // file formats.
         PageFormat pageFormat = this.mapComponent.getPageFormat();
@@ -276,55 +280,55 @@ public class FlexProjectorWindow extends MainWindow
         pageFormat.setUnitPixels(false);
         pageFormat.setPageScale(100000000); // 100 Mio.
         pageFormat.setVisible(false);
-        
+
         // setup undo/redo
         mapComponent.registerUndoMenuItems(this.undoMenuItem, redoMenuItem);
         FlexUndoManager um = new FlexUndoManager(flexProjectorModel,
                 this.projectionBrewerPanel);
         mapComponent.setMapUndoManager(um);
-        
+
         // pass map to panel for undo/redo support
         this.projectionBrewerPanel.setMap(this.mapComponent);
-        
+
         // load default coastline data
         Properties props = PropertiesLoader.loadProperties("ika.app.Application.properties");
         String mapData = props.getProperty("MapData");
         java.net.URL url = FlexProjectorWindow.class.getResource(mapData);
         importData(url, true);
-        
+
         // initialize the undo/redo manager with the current map content.
         this.mapComponent.resetUndo();
-        
+
         this.getRootPane().addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             @Override
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 windowModifiedPropertyChange(evt);
             }
         });
-        
+
         this.setDocumentClean();
 
         // add the distortion table as a listener to the QModel: when the user
         // changes the settings for the Q factor, the table is updated.
         flexProjectorModel.getDisplayModel().qModel.addQListener(distortionTable);
-        
+
         // Asynchronously construct the distortion parameters for all projections.
         // This starts a separate thread to fill the distortion table.
         new ika.proj.TableFiller(distortionTable, flexProjectorModel).execute();
 
         projectionBrewerPanel.writeDisplayGUI();
         return true;
-    
+
     }
-   
-    private void importData(final java.net.URL url, 
+
+    private void importData(final java.net.URL url,
             final boolean replacePreviousData) {
-        
+
         MapDataReceiver receiver = new MapDataReceiver(mapComponent) {
             @Override
             protected GeoSet getDestinationGeoSet() {
                 FlexProjectorModel model
-                        = (FlexProjectorModel)mapComponent.getGeoSet();
+                        = (FlexProjectorModel) mapComponent.getGeoSet();
                 GeoSet destinationGeoSet = model.getUnprojectedData();
                 if (replacePreviousData) {
                     destinationGeoSet.removeAllGeoObjects();
@@ -334,23 +338,23 @@ public class FlexProjectorWindow extends MainWindow
                 destinationGeoSet.add(subSet);
                 return subSet;
             }
-            
+
             private void updateModel(boolean added) {
                 if (added) {
                     FlexProjectorModel model
-                            = (FlexProjectorModel)mapComponent.getGeoSet();
+                            = (FlexProjectorModel) mapComponent.getGeoSet();
                     model.designProjectionChanged(model.getDesignProjection());
                     mapComponent.showAll();
                 }
             }
-            
+
             @Override
             public boolean add(GeoSet geoSet) {
                 boolean added = super.add(geoSet);
                 this.updateModel(added);
                 return added;
             }
-            
+
             @Override
             public boolean add(ika.table.TableLink tableLink) {
                 boolean added = super.add(tableLink);
@@ -358,85 +362,86 @@ public class FlexProjectorWindow extends MainWindow
                 return added;
             }
         };
-        
+
         try {
             GeoImporter importer = GeoImporter.findGeoImporter(url);
             // importer.setProgressIndicator(new SwingProgressIndicator(this, "Load Data", null, true));
             importer.read(url, receiver, GeoImporter.SAME_THREAD); // FIXME NEW_THREAD);
         } catch (Exception exc) {
             exc.printStackTrace();
-            ika.utils.ErrorDialog.showErrorDialog("Could not load the data. " +
-                    "The format may not be supported.",
+            ika.utils.ErrorDialog.showErrorDialog("Could not load the data. "
+                    + "The format may not be supported.",
                     "Data Loading Error");
         }
     }
-    
-    /** 
+
+    /**
      * Mac OS X and Windows specific initialization of the menus
      */
     private void initMenus() {
         if (ika.utils.Sys.isMacOSX()) {
-            
+
             // remove exit menu item on Mac OS X
             this.fileMenu.remove(this.exitMenuSeparator);
             this.fileMenu.remove(this.exitMenuItem);
             this.fileMenu.validate();
-            
+
             // remove window info menu item on Mac OS X
             this.menuBar.remove(this.winHelpMenu);
-            
+
             // remove preferences menu item on Mac OS X
             //this.editMenu.remove(this.preferencesSeparator);
             //this.editMenu.remove(this.preferencesMenuItem);
             //this.editMenu.validate();
-            
         } else if (ika.utils.Sys.isWindows()) {
-            
+
             // remove fileSeparator and closeMenuItem to make the file menu windows style
             fileMenu.remove(fileSeparator);
             fileMenu.remove(closeMenuItem);
-            
+
             // remove mac help menu item on Windows
             this.menuBar.remove(this.macHelpMenu);
-            
+
         }
-        
+
         this.menuBar.validate();
     }
-    
+
     /**
-     * Customize the passed defaultRenderParams.
-     * This implementation does not alter the passed parameters.
+     * Customize the passed defaultRenderParams. This implementation does not
+     * alter the passed parameters.
      */
     public RenderParams getRenderParams(RenderParams defaultRenderParams) {
         return defaultRenderParams;
     }
-    
+
     /**
      * Return a GeoMap that can be stored in an external file.
+     *
      * @return The document content.
      */
     @Override
     protected byte[] getDocumentData() {
-        FlexProjectorModel model = (FlexProjectorModel)mapComponent.getGeoSet();
+        FlexProjectorModel model = (FlexProjectorModel) mapComponent.getGeoSet();
         SerializableProjection p = model.getDesignProjection();
         return p.serializeToString().getBytes();
     }
-    
+
     /**
      * Restore the document content from a passed GeoMap.
+     *
      * @param data The document content.
      */
     @Override
-    protected void setDocumentData (byte[] data) throws Exception {
+    protected void setDocumentData(byte[] data) throws Exception {
         DesignProjection p = DesignProjection.factory(new String(data));
-        FlexProjectorModel model = (FlexProjectorModel)mapComponent.getGeoSet();
+        FlexProjectorModel model = (FlexProjectorModel) mapComponent.getGeoSet();
         model.setDesignProjection(p);
 
         projectionBrewerPanel.updateDistortionIndicesAndInformListeners();
         projectionBrewerPanel.writeMethodGUI();
     }
-    
+
     /**
      * The preferences changed. The settings are used to generate the graphics,
      * so we need to regenerate the graphics in all windows.
@@ -444,18 +449,18 @@ public class FlexProjectorWindow extends MainWindow
     public static void updateAfterPreferencesChange() {
         final int windowsCount = MainWindow.windows.size();
         for (int i = windowsCount - 1; i >= 0; i--) {
-            FlexProjectorWindow w = (FlexProjectorWindow)MainWindow.windows.get(i);
+            FlexProjectorWindow w = (FlexProjectorWindow) MainWindow.windows.get(i);
             // pass background color of map to map component
             w.mapComponent.setBackground(FlexProjectorPreferencesPanel.getMapBackgroundColor());
             w.projectionBrewerPanel.updateDistortionIndicesAndInformListeners();
             w.distortionTable.qAreaAcceptanceChanged();
         }
     }
-    
+
     /**
      * Update all menus of this window.
      */
-    private void updateAllMenus(){
+    private void updateAllMenus() {
         // Only update the menu items if this frame is visible. 
         // This avoids menu items being enabled that will be detached from 
         // this frame and will be attached to a utility frame or will be 
@@ -467,28 +472,28 @@ public class FlexProjectorWindow extends MainWindow
             MainWindow.updateWindowMenu(this.windowMenu, this);
         }
     }
-    
+
     /**
      * Update the enabled/disabled state of the items in the file menu.
      */
     private void updateFileMenu() {
         FlexProjectorModel model = this.projectionBrewerPanel.getModel();
-        
+
         this.closeMenuItem.setEnabled(true);
         this.saveMenuItem.setEnabled(this.isDocumentDirty());
         this.saveAsMenuItem.setEnabled(true);
         this.webImportMenuItem.setEnabled(true);
         this.webDownloadMenuItem.setEnabled(true);
-        
+
         this.exportDistortionTableMenuItem.setEnabled(true);
-        
+
         this.projectShapeMenuItem.setEnabled(true);
         this.projectImageMenuItem.setEnabled(true);
         this.projectGridMenuItem.setEnabled(true);
 
         this.projectImageToGeographicMenuItem.setEnabled(true);
     }
-    
+
     /**
      * Update the enabled/disabled state of the items in the edit menu.
      */
@@ -501,7 +506,7 @@ public class FlexProjectorWindow extends MainWindow
         boolean mapHasVisibleObjects = mapComponent.hasVisibleGeoObjects();
         boolean isFlexProj = p instanceof FlexProjection && !(p instanceof FlexMixProjection);
         // undo and redo menu items are handled by the Undo manager.
-        
+
         this.deleteMenuItem.setEnabled(mapHasSelectedObj);
         this.copyMenuItem.setEnabled(mapHasSelectedObj);
         this.cutMenuItem.setEnabled(mapHasSelectedObj);
@@ -509,13 +514,12 @@ public class FlexProjectorWindow extends MainWindow
         this.selectAllMenuItem.setEnabled(mapHasVisibleObjects);
         this.deselectAllMenuItem.setEnabled(mapHasSelectedObj);
 
-
         this.resetProjectionMenuItem.setEnabled(mapHasVisibleObjects && isFlexProj);
         this.scaleMenuItem.setEnabled(mapHasVisibleObjects);
-        
+
         this.qMenuItem.setEnabled(true);
     }
-    
+
     /**
      * Update the enabled/disabled state of the items in the view menu.
      */
@@ -532,12 +536,13 @@ public class FlexProjectorWindow extends MainWindow
         this.tissotMenuItem.setEnabled(true);
         this.switchDisplayMenuItem.setEnabled(true);
     }
-    
+
     /**
      * Construct a box bounding the gratiule of a projection. A new GeoSet is
      * created that contains the passed GeoSet and a new GeoSet containing the
      * bounding box. The bounding box includes all elements of the passed GeoSet
      * and is projected with the passed projection.
+     *
      * @param geoSet A set of features.
      * @param projection The projection to apply.
      * @return A new GeoSet containing the passed GeoSet and the bounding box.
@@ -545,7 +550,7 @@ public class FlexProjectorWindow extends MainWindow
     private GeoSet addBoundingBox(GeoSet geoSet, Projection projection) {
         GeoSet boundingBoxGeoSet = new GeoSet();
         boundingBoxGeoSet.setName("Bounding Box");
-        
+
         FlexProjectorModel model = this.projectionBrewerPanel.getModel();
         GeoPath boundingBox = model.constructBoundingBox(projection);
         if (boundingBox != null && geoSet != null) {
@@ -557,12 +562,12 @@ public class FlexProjectorWindow extends MainWindow
     }
 
     private void exportMap() {
-        
+
         GeoSetExporter exporter = GeoExportGUI.askExporter(this);
         if (exporter == null) {
             return;
         }
-        
+
         exporter.setDisplayMapScale(mapComponent.getScaleFactor());
         GeoSet geoSet = mapComponent.getImportExportGeoSet();
         PageFormat pageFormat = mapComponent.getPageFormat();
@@ -571,14 +576,14 @@ public class FlexProjectorWindow extends MainWindow
         if (exporter instanceof VectorGraphicsExporter) {
             geoSet = addBoundingBox(geoSet, getProjectionClone());
         }
-        
+
         GeoExportGUI.export(exporter, geoSet, getTitle(), this, pageFormat, true);
     }
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -1224,9 +1229,9 @@ webImportMenuItem.addActionListener(new java.awt.event.ActionListener() {
     fileMenu.add(exportDistortionTableMenuItem);
     fileMenu.add(jSeparator6);
 
-    projectGeographicToFlexMenu.setText("Project from Geographic to Flex");
+    projectGeographicToFlexMenu.setText("Project from Geographic");
 
-    projectShapeMenuItem.setText("Project Shape File…");
+    projectShapeMenuItem.setText("Project Shapefile…");
     projectShapeMenuItem.setEnabled(false);
     projectShapeMenuItem.addActionListener(new java.awt.event.ActionListener() {
         public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1610,14 +1615,14 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void onlineHelpMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onlineHelpMenuItemActionPerformed
-        
-        Properties props =
-                ika.utils.PropertiesLoader.loadProperties("ika.app.Application.properties");
+
+        Properties props
+                = ika.utils.PropertiesLoader.loadProperties("ika.app.Application.properties");
         String url = props.getProperty("HelpWebPage", "http://www.flexprojector.com/man/index.html");
         BrowserLauncherWrapper.openURL(url);
 
     }//GEN-LAST:event_onlineHelpMenuItemActionPerformed
-    
+
     private void curveDistanceToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_curveDistanceToggleButtonActionPerformed
         this.curvesManager.setCurveType(CurvesManager.CurveType.Y);
         this.curvesManager.updateCurves();
@@ -1643,7 +1648,7 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_coastlineMenuItemActionPerformed
 
     private void qMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_qMenuItemActionPerformed
-        this.projectionBrewerPanel.showAcceptanceDialog();        
+        this.projectionBrewerPanel.showAcceptanceDialog();
     }//GEN-LAST:event_qMenuItemActionPerformed
 
     private void curvesMapprofilesMapComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_curvesMapprofilesMapComponentResized
@@ -1672,16 +1677,16 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
         horizontalProfileLabel.setText("Horizontal Profile at \u00B1" + lat + '\u00B0');
         distortionProfilesManager.setLat(lat);
         distortionProfilesManager.updateDistortionProfiles(false, p);
-        
+
         GeoSet foregroundGeoSet = mapComponent.getForegroundGeoSet();
         foregroundGeoSet.removeByName(distortionProfilesManager.getMapProfileName());
-        
+
         // display profile location in map while slider is being dragged
         if (latProfileSlider.getValueIsAdjusting()) {
             GeoSet profiles = distortionProfilesManager.constructProfilesInMap(false, p);
             foregroundGeoSet.add(profiles);
         }
-        
+
     }//GEN-LAST:event_latProfileSliderStateChanged
 
     private void lonProfileSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_lonProfileSliderStateChanged
@@ -1696,10 +1701,10 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
         verticalProfileLabel.setText("Vertical Profile at \u00B1" + lon + '\u00B0');
         distortionProfilesManager.setLon(lon);
         distortionProfilesManager.updateDistortionProfiles(true, p);
-        
+
         GeoSet foregroundGeoSet = mapComponent.getForegroundGeoSet();
         foregroundGeoSet.removeByName(distortionProfilesManager.getMapProfileName());
-        
+
         // display profile location in map while slider is being dragged
         if (lonProfileSlider.getValueIsAdjusting()) {
             GeoSet profiles = distortionProfilesManager.constructProfilesInMap(true, p);
@@ -1710,17 +1715,17 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
                 mapComponent.showAll();
             }
         }
-        
+
     }//GEN-LAST:event_lonProfileSliderStateChanged
 
     private void exportDistortionTableMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportDistortionTableMenuItemActionPerformed
-        
+
         String filePath = ika.utils.FileUtils.askFile(null, "Save Text File",
                 "Distortion Parameters.txt", false, "txt");
         if (filePath == null) {
             return;
         }
-        
+
         java.io.PrintStream out = null;
         try {
             out = new java.io.PrintStream(new java.io.FileOutputStream(filePath));
@@ -1732,34 +1737,34 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
                 out.close();
             }
         }
-        
+
     }//GEN-LAST:event_exportDistortionTableMenuItemActionPerformed
 
     private void tableInfoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tableInfoButtonActionPerformed
-        JOptionPane.showMessageDialog(this, this.distortionInfoPanel, 
+        JOptionPane.showMessageDialog(this, this.distortionInfoPanel,
                 "Projection Distortion Table", JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_tableInfoButtonActionPerformed
 
     private void switchDisplayMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_switchDisplayMenuItemActionPerformed
         this.projectionBrewerPanel.switchDisplay();
     }//GEN-LAST:event_switchDisplayMenuItemActionPerformed
-    
+
     private void webDownloadMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_webDownloadMenuItemActionPerformed
-        Properties props =
-                ika.utils.PropertiesLoader.loadProperties("ika.app.Application.properties");
+        Properties props
+                = ika.utils.PropertiesLoader.loadProperties("ika.app.Application.properties");
         String url = props.getProperty("DataWebPage", "http://www.flexprojector.com/datadownload.html");
         BrowserLauncherWrapper.openURL(url);
     }//GEN-LAST:event_webDownloadMenuItemActionPerformed
-    
+
     private void exportMapMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportMapMenuItemActionPerformed
         exportMap();
     }//GEN-LAST:event_exportMapMenuItemActionPerformed
-            
+
     private void webImportMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_webImportMenuItemActionPerformed
-        
+
         Vector names = new Vector(5);
         Vector urls = new Vector(5);
-        
+
         // read the index of available data sets.
         // This could be done in a separate thread while the event dispatching
         // thread could display an indeterminate progress bar.
@@ -1769,7 +1774,7 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
         try {
             java.net.URL url = new java.net.URL("http://www.flexprojector.com/data/index.txt");
             in = new BufferedReader(new InputStreamReader(url.openStream()));
-            
+
             String str;
             while ((str = in.readLine()) != null) {
                 String[] strParts = str.split("=");
@@ -1777,8 +1782,8 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
                 urls.add(strParts[1]);
             }
         } catch (Exception e) {
-            ika.utils.ErrorDialog.showErrorDialog("<html>Connecting to www.flexprojector.com is not possible. " +
-                    "<br>Please make sure you have a working Internet connection.<html>",
+            ika.utils.ErrorDialog.showErrorDialog("<html>Connecting to www.flexprojector.com is not possible. "
+                    + "<br>Please make sure you have a working Internet connection.<html>",
                     "Data Loading Error");
             return;
         } finally {
@@ -1789,31 +1794,31 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
                 }
             }
         }
-        
+
         // ask the user which data set to load
         this.webImportComboBox.removeAllItems();
         for (int i = 0; i < names.size(); i++) {
             this.webImportComboBox.addItem(names.get(i));
         }
-        int result = JOptionPane.showConfirmDialog(this, this.webImportPanel, 
+        int result = JOptionPane.showConfirmDialog(this, this.webImportPanel,
                 "Load Web Data", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (result != JOptionPane.YES_OPTION) {
             return;
         }
-        
-        String name = (String)this.webImportComboBox.getSelectedItem();
+
+        String name = (String) this.webImportComboBox.getSelectedItem();
         boolean replaceCurrentData = this.webImportReplaceRadioButton.isSelected();
-        
+
         // load the data
         try {
-            String url = (String)urls.get(names.indexOf(name));
+            String url = (String) urls.get(names.indexOf(name));
             this.importData(new java.net.URL(url), replaceCurrentData);
         } catch (MalformedURLException e) {
             e.printStackTrace();
             ika.utils.ErrorDialog.showErrorDialog("Could not find the data on www.flexprojector.com.", e);
         }
     }//GEN-LAST:event_webImportMenuItemActionPerformed
-    
+
     private void showSecondProjectionMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showSecondProjectionMenuItemActionPerformed
         projectionBrewerPanel.toggleSecondProjection();
     }//GEN-LAST:event_showSecondProjectionMenuItemActionPerformed
@@ -1831,7 +1836,7 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_graticuleMenuItemActionPerformed
 
     private Projection getProjectionClone() {
-        
+
         DisplayModel dm = projectionBrewerPanel.getModel().getDisplayModel();
         Projection p;
         if (dm.showFlexProjection) {
@@ -1839,54 +1844,98 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
             p = projectionBrewerPanel.getModel().getDesignProjection();
         } else {
             // background projection
-            p = (Projection)dm.projection;
+            p = (Projection) dm.projection;
         }
-        p = (Projection)p.clone();
+        p = (Projection) p.clone();
         p.setEllipsoid(Ellipsoid.SPHERE);
         p.initialize();
         return p;
     }
 
+    private Projection askUserForProjection() {
+        Projection proj = null;
+
+        // construct list with projection names
+        java.util.List projNames = ProjectionsManager.getProjectionNames(false, false, false);
+        DisplayModel dm = projectionBrewerPanel.getModel().getDisplayModel();
+        if (dm.showFlexProjection) {
+            Projection flexProj = projectionBrewerPanel.getModel().getDesignProjection();
+            projNames.add(new JSeparator());
+            projNames.add(flexProj.getName());
+        }
+
+        // display dialog
+        JComboBox jcb = new JComboBox(projNames.toArray());
+        jcb.setMaximumRowCount(projNames.size());
+        // custom renderer for separator in menu
+        jcb.setRenderer(new BasicComboBoxRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList list, Object value,
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof JSeparator) {
+                    return (JSeparator) value;
+                }
+                return this;
+            }
+        });
+
+        int res = JOptionPane.showOptionDialog(this, jcb, "Select a Projection",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
+                null, null, null);
+        if (res == JOptionPane.OK_OPTION) {
+            if (jcb.getSelectedIndex() == projNames.size() - 1) {
+                proj = projectionBrewerPanel.getModel().getDesignProjection();
+                proj = cloneAndNormalizeIfFlexProjection(proj);
+            } else {
+                proj = ProjectionsManager.getProjection((String) (jcb.getSelectedItem()));
+            }
+            proj.initialize();
+        }
+
+        return proj;
+    }
+
     private void projectShapeMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_projectShapeMenuItemActionPerformed
-        
         // ask the user for a file to read
-        String msg = "Project ESRI Shape File with Current Projection";
+        String msg = "Project ESRI Shapefile";
         String importFilePath = FileUtils.askFile(this, msg, true);
-        if (importFilePath != null) {
-            Projection proj = getProjectionClone();
-            proj = cloneAndNormalizeIfFlexProjection(proj);
+        if (importFilePath == null) {
+            return;
+        }
+
+        // ask user for a projection
+        Projection proj = askUserForProjection();
+        if (proj != null) {
             new ShapeProjector(this, proj, importFilePath, null);
         }
-        
     }//GEN-LAST:event_projectShapeMenuItemActionPerformed
-    
+
     /**
-     * If the passed projection is a FlexProjection and if this projection
-     * is not normalized (i.e. the maximum value of the length or distribution
-     * is not 1), then the passed projection is cloned and normalized, and the 
+     * If the passed projection is a FlexProjection and if this projection is
+     * not normalized (i.e. the maximum value of the length or distribution is
+     * not 1), then the passed projection is cloned and normalized, and the
      * clone is returned. Otherwise the passed projection is returned unaltered.
+     *
      * @param p
-     * @return 
+     * @return
      */
     private Projection cloneAndNormalizeIfFlexProjection(Projection p) {
         if (p instanceof FlexProjection) {
-            FlexProjection fp = (FlexProjection)p;
+            FlexProjection fp = (FlexProjection) p;
             if (fp.getModel().isNormalized() == false) {
-                fp = (FlexProjection)p.clone();
+                fp = (FlexProjection) p.clone();
                 fp.getModel().normalize();
                 return fp;
             }
         }
         return p;
-        
-    }
-    private void projectImage(Projection srcProj, Projection dstProj) {
 
-        srcProj = cloneAndNormalizeIfFlexProjection(srcProj);
-        dstProj = cloneAndNormalizeIfFlexProjection(dstProj);
-        
-        final String openMsg = "Project Plate Carrée Image with " + dstProj.toString();
-        final String saveMsg = "Save Projected Image (TIFF Format)";
+    }
+
+    private void projectImage(Projection srcProj, Projection dstProj) {
+        final String openMsg = "Project " + srcProj.getName() + " Image";
+        final String saveMsg = "Save Image (TIFF Format)";
 
         // ask the user for a file to read
         String importPath = FileUtils.askFile(this, openMsg, true);
@@ -1906,7 +1955,14 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
         new ImageProjector(this, srcProj, dstProj, importPath, exportPath, nearestNeighbor);
     }
     private void projectImageMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_projectImageMenuItemActionPerformed
-        projectImage(null, getProjectionClone());
+        // ask user for a projection
+        Projection dstProj = askUserForProjection();
+        if (dstProj == null) {
+            return;
+        }
+        Projection srcProj = new EquidistantCylindricalProjection();
+        srcProj.initialize();
+        projectImage(srcProj, dstProj);
     }//GEN-LAST:event_projectImageMenuItemActionPerformed
 
     private void tissotMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tissotMenuItemActionPerformed
@@ -1916,26 +1972,29 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     private void toggleMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_toggleMenuItemActionPerformed
         projectionBrewerPanel.toggleProjectionVisibility();
     }//GEN-LAST:event_toggleMenuItemActionPerformed
-        
+
     private void projectGridMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_projectGridMenuItemActionPerformed
-        Projection proj = getProjectionClone();
-        proj = cloneAndNormalizeIfFlexProjection(proj);
-        
         // ask the user for a grid file to read
         String msg = "Project ESRI ASCII Grid with Current Projection";
-        String importFilePath= FileUtils.askFile(this, msg, true);
+        String importFilePath = FileUtils.askFile(this, msg, true);
         if (importFilePath == null) {
             return;
         }
-        
+
+        // ask user for a projection
+        Projection proj = askUserForProjection();
+        if (proj == null) {
+            return;
+        }
+
         // ask the user for a file to store the projected grid
         String fileName = FileUtils.forceFileNameExtension(importFilePath, "asc");
         String exportFilePath = FileUtils.askFile(this, "Save Projected Grid",
                 fileName, false, "asc");
         if (exportFilePath == null) {
             return; // user canceled
-        } 
-        
+        }
+
         new GridProjector(this, proj, importFilePath, exportFilePath);
     }//GEN-LAST:event_projectGridMenuItemActionPerformed
 
@@ -1944,26 +2003,26 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
         // show the preferences dialog
         new ika.gui.PreferencesDialog(this, true).setVisible(true);
     }//GEN-LAST:event_preferencesMenuItemActionPerformed
-	
+
     private void newMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newMenuItemActionPerformed
         FlexProjectorWindow.newDocumentWindow();
     }//GEN-LAST:event_newMenuItemActionPerformed
-	
+
     private void openMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMenuItemActionPerformed
-        FlexProjectorWindow w = (FlexProjectorWindow)openDocumentWindow();
+        FlexProjectorWindow w = (FlexProjectorWindow) openDocumentWindow();
         if (w != null) {
             w.mapComponent.showAll();
-            
+
             // the first undo state holds the default Robinson projection. Replace
             // this first state with the state that was just loaded.
             w.mapComponent.resetUndo();
         }
     }//GEN-LAST:event_openMenuItemActionPerformed
-	
+
     private void closeMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeMenuItemActionPerformed
         this.closeDocumentWindow();
     }//GEN-LAST:event_closeMenuItemActionPerformed
-	
+
     private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
         this.saveDocumentWindow();
     }//GEN-LAST:event_saveMenuItemActionPerformed
@@ -1972,13 +2031,13 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
         String filePath = this.askFileToSave("Save As");
         this.saveDocumentWindow(filePath);
     }//GEN-LAST:event_saveAsMenuItemActionPerformed
-    	    					    		
+
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
         // this handler is not used on Macintosh. On Windows and other platforms
         // only this window is closed.
         this.closeDocumentWindow();
     }//GEN-LAST:event_exitMenuItemActionPerformed
-	
+
     private void undoMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_undoMenuItemActionPerformed
         try {
             projectionBrewerPanel.showDesignProjection();
@@ -1988,7 +2047,7 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
             ika.utils.ErrorDialog.showErrorDialog("Could not undo.", this);
         }
     }//GEN-LAST:event_undoMenuItemActionPerformed
-	
+
     private void redoMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_redoMenuItemActionPerformed
         try {
             projectionBrewerPanel.showDesignProjection();
@@ -1998,7 +2057,7 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
             ika.utils.ErrorDialog.showErrorDialog("Could not successfully redo.", this);
         }
     }//GEN-LAST:event_redoMenuItemActionPerformed
-    
+
     private void cutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cutMenuItemActionPerformed
         // create a GeoSet with copies of the currently selected GeoObjects
         GeoSet copyGeoSet = new GeoSet();
@@ -2006,50 +2065,51 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
         if (copyGeoSet.getNumberOfChildren() == 0) {
             return;
         }
-        
+
         // put the selected GeoObjects onto the clipboard
         GeoTransferable.storeInSystemClipboard(copyGeoSet);
-        
+
         // delete the selected GeoObjects
         this.mapComponent.removeSelectedGeoObjects();
-        
+
         this.mapComponent.addUndo("Cut");
     }//GEN-LAST:event_cutMenuItemActionPerformed
-    
+
     private void copyMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyMenuItemActionPerformed
-        
+
         // create a GeoSet with copies of the currently selected GeoObjects
         GeoSet copyGeoSet = new GeoSet();
         this.mapComponent.getGeoSet().cloneIfSelected(copyGeoSet);
-        if (copyGeoSet.getNumberOfChildren() == 0)
+        if (copyGeoSet.getNumberOfChildren() == 0) {
             return;
-        copyGeoSet = (GeoSet)copyGeoSet.getGeoObject(0);
-        
+        }
+        copyGeoSet = (GeoSet) copyGeoSet.getGeoObject(0);
+
         // put the selected objects onto the clipboard
         GeoTransferable.storeInSystemClipboard(copyGeoSet);
-        
+
         // update the "Paste" command in the edit menu
         this.updateEditMenu();
     }//GEN-LAST:event_copyMenuItemActionPerformed
-	
+
     private void pasteMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pasteMenuItemActionPerformed
         GeoSet geoSet = GeoTransferable.retreiveSystemClipboardCopy();
         if (geoSet == null) {
             return;
         }
-        
+
         // make all pasted objects visible to show the result of the paste action.
         geoSet.setVisible(true);
-        
+
         this.mapComponent.deselectAllAndAddChildren(geoSet);
         this.mapComponent.addUndo("Paste");
-        
+
         // make sure the pasted objects are visible in the map
         if (this.mapComponent.isObjectVisibleOnMap(geoSet) == false) {
             this.mapComponent.showAll();
         }
     }//GEN-LAST:event_pasteMenuItemActionPerformed
-	
+
     private void deleteMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteMenuItemActionPerformed
         this.mapComponent.removeSelectedGeoObjects();
         this.mapComponent.addUndo("Delete");
@@ -2058,11 +2118,11 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     private void selectAllMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllMenuItemActionPerformed
         this.mapComponent.selectAllGeoObjects();
     }//GEN-LAST:event_selectAllMenuItemActionPerformed
-	
+
     private void deselectAllMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllMenuItemActionPerformed
-        this.mapComponent.deselectAllGeoObjects();               
+        this.mapComponent.deselectAllGeoObjects();
     }//GEN-LAST:event_deselectAllMenuItemActionPerformed
-		    
+
     private void zoomInMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInMenuItemActionPerformed
         this.mapComponent.zoomIn();
     }//GEN-LAST:event_zoomInMenuItemActionPerformed
@@ -2070,38 +2130,37 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     private void zoomOutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutMenuItemActionPerformed
         this.mapComponent.zoomOut();
     }//GEN-LAST:event_zoomOutMenuItemActionPerformed
-    
+
     private void showAllMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showAllMenuItemActionPerformed
         mapComponent.showAll();
     }//GEN-LAST:event_showAllMenuItemActionPerformed
-	
+
     private void showPageCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showPageCheckBoxMenuItemActionPerformed
         boolean show = this.showPageCheckBoxMenuItem.isSelected();
         this.mapComponent.getPageFormat().setVisible(show);
     }//GEN-LAST:event_showPageCheckBoxMenuItemActionPerformed
-	
+
     private void minimizeMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minimizeMenuItemActionPerformed
         this.setState(Frame.ICONIFIED);
     }//GEN-LAST:event_minimizeMenuItemActionPerformed
-	
+
     private void zoomMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomMenuItemActionPerformed
         if ((this.getExtendedState() & Frame.MAXIMIZED_BOTH) != MAXIMIZED_BOTH) {
             this.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        }
-        else {
+        } else {
             this.setExtendedState(JFrame.NORMAL);
         }
         this.validate();
     }//GEN-LAST:event_zoomMenuItemActionPerformed
-	
+
     private void infoMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoMenuItemActionPerformed
         ika.gui.ProgramInfoPanel.showApplicationInfo();
     }//GEN-LAST:event_infoMenuItemActionPerformed
-	    		
+
     private void zoomInToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInToggleButtonActionPerformed
         this.mapComponent.setMapTool(new ZoomInTool(this.mapComponent));
     }//GEN-LAST:event_zoomInToggleButtonActionPerformed
-    
+
     private void zoomOutToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutToggleButtonActionPerformed
         this.mapComponent.setMapTool(new ZoomOutTool(this.mapComponent));
     }//GEN-LAST:event_zoomOutToggleButtonActionPerformed
@@ -2109,17 +2168,17 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     private void handToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_handToggleButtonActionPerformed
         this.mapComponent.setMapTool(new PanTool(this.mapComponent));
     }//GEN-LAST:event_handToggleButtonActionPerformed
-	
+
     private void distanceToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_distanceToggleButtonActionPerformed
         MeasureTool tool = new MeasureTool(this.mapComponent);
         final JFrame frame = this;
         MeasureToolListener listener = new MeasureToolListener() {
-            
+
             @Override
             public void distanceChanged(double distance, double angle,
                     MapComponent mapComponent) {
             }
-            
+
             @Override
             public void newDistance(double distance, double angle, ika.gui.MapComponent mapComponent) {
                 StringBuilder sb = new StringBuilder();
@@ -2128,14 +2187,14 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
                 sb.append("<br>Angle: ");
                 sb.append(new DecimalFormat("#.#").format(Math.toDegrees(angle)));
                 sb.append("\u00B0<br><br><small>Angle is counterclockwise from the horizontal axis.</small></html>");
-                JOptionPane.showMessageDialog(frame, sb.toString(), 
+                JOptionPane.showMessageDialog(frame, sb.toString(),
                         "Distance and Angle", JOptionPane.PLAIN_MESSAGE);
             }
-            
+
             @Override
             public void clearDistance() {
             }
-            
+
         };
         tool.addMeasureToolListener(listener);
         this.mapComponent.setMapTool(tool);
@@ -2144,7 +2203,7 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     private void showAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showAllButtonActionPerformed
         this.mapComponent.showAll();
     }//GEN-LAST:event_showAllButtonActionPerformed
-				        
+
     private void closeWindow(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeWindow
         this.closeDocumentWindow();
     }//GEN-LAST:event_closeWindow
@@ -2154,13 +2213,15 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_scaleMenuItemActionPerformed
 
     private void projectImageToGeographicMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_projectImageToGeographicMenuItemActionPerformed
-        projectImage(getProjectionClone(), null);
+        Projection dstProj = new EquidistantCylindricalProjection();
+        dstProj.initialize();
+        projectImage(getProjectionClone(), dstProj);
     }//GEN-LAST:event_projectImageToGeographicMenuItemActionPerformed
 
     private void infoMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoMenuItem1ActionPerformed
         ika.gui.ProgramInfoPanel.showApplicationInfo();
     }//GEN-LAST:event_infoMenuItem1ActionPerformed
-    
+
     @Override
     protected boolean closeDocumentWindow() {
         Window[] ownedWindows = this.getOwnedWindows();
@@ -2184,25 +2245,25 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
      * state of the save menu depending on the windowModified property attached
      * to the root pane.
      */
-    private void windowModifiedPropertyChange(java.beans.PropertyChangeEvent evt) {                                    
-        
+    private void windowModifiedPropertyChange(java.beans.PropertyChangeEvent evt) {
+
         // only treat changes to the windowModified property
         if (!"windowModified".equals(evt.getPropertyName())) {
             return;
         }
-        
+
         // retrieve the value of the windowModified property
         Boolean windowModified = null;
         if (saveMenuItem != null && this.getRootPane() != null) {
             windowModified = (Boolean) this.getRootPane().getClientProperty("windowModified");
         }
-        
+
         // enable or disable the saveMenu accordingly
         if (windowModified != null) {
             this.saveMenuItem.setEnabled(windowModified.booleanValue());
         }
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel centerPanel;
     private javax.swing.JMenuItem closeMenuItem;
@@ -2320,5 +2381,5 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     private javax.swing.JMenuItem zoomOutMenuItem;
     private javax.swing.JToggleButton zoomOutToggleButton;
     // End of variables declaration//GEN-END:variables
-    
+
 }

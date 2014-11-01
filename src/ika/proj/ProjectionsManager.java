@@ -202,10 +202,14 @@ public class ProjectionsManager {
      * that indicates whether a flex projection will only approximate the 
      * projections. Does not include the Mercator projection. The first entry
      * is for loading an external flex file.
+     * @param labelApproximated If true approximated projections are labeled.
+     * @param onlyCylindrical If true only cylindrical projections are included.
+     * @param includeExternalFlexProjectorFile If true an option is added for 
+     * loading external Flex Projector files.
      * @return
      */
     public static List<String> getProjectionNames(boolean labelApproximated,
-            boolean onlyCylindrical) {
+            boolean onlyCylindrical, boolean includeExternalFlexProjectorFile) {
 
         ProjectionsManager.loadProjections();
         
@@ -237,7 +241,9 @@ public class ProjectionsManager {
         selectedProjs.remove("Mercator");
 
         // first entry is for external Flex Projection files.
-        selectedProjs.add(0, SELECT_FLEX_FILE_STRING);
+        if (includeExternalFlexProjectorFile) {
+            selectedProjs.add(0, SELECT_FLEX_FILE_STRING);
+        }
 
         return selectedProjs;
 

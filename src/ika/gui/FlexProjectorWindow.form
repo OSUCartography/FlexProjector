@@ -249,12 +249,12 @@
             </MenuItem>
             <Menu class="javax.swing.JMenu" name="projectGeographicToFlexMenu">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Project from Geographic to Flex"/>
+                <Property name="text" type="java.lang.String" value="Project from Geographic"/>
               </Properties>
               <SubComponents>
                 <MenuItem class="javax.swing.JMenuItem" name="projectShapeMenuItem">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Project Shape File&#x2026;"/>
+                    <Property name="text" type="java.lang.String" value="Project Shapefile&#x2026;"/>
                     <Property name="enabled" type="boolean" value="false"/>
                   </Properties>
                   <Events>
@@ -687,6 +687,7 @@
   <SyntheticProperties>
     <SyntheticProperty name="menuBar" type="java.lang.String" value="menuBar"/>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <Events>
     <EventHandler event="windowClosing" listener="java.awt.event.WindowListener" parameters="java.awt.event.WindowEvent" handler="closeWindow"/>

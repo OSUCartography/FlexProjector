@@ -254,7 +254,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
             boolean onlyCyl = foregroundProj instanceof LatitudeMixerProjection;
             boolean labelApproximated = foregroundProj instanceof FlexProjection;
             List<String> projs;
-            projs = ProjectionsManager.getProjectionNames(labelApproximated, onlyCyl);
+            projs = ProjectionsManager.getProjectionNames(labelApproximated, onlyCyl, true);
 
             // populate the menus
             for (String proj : projs) {
@@ -3801,7 +3801,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         try {
 
             // construct list with projection names
-            List<String> projNames = ProjectionsManager.getProjectionNames(true, false);
+            List<String> projNames = ProjectionsManager.getProjectionNames(true, false, true);
 
             // ask the user for a projection
             String msg = "Reset to this projection:";
