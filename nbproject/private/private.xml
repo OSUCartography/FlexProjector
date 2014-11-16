@@ -17,15 +17,6 @@
         </file>
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/Users/jennyb/Documents/Java/FlexProjector/src/ika/gui/ProjectionBrewerPanel.java</file>
-            <file>file:/Users/jennyb/Documents/Java/FlexProjector/src/ika/app/Application.properties</file>
-            <file>file:/Users/jennyb/Documents/Java/FlexProjector/src/ika/app/Main.java</file>
-            <file>file:/Users/jennyb/Documents/Java/FlexProjector/src/ika/geoimport/geoimport.properties</file>
-            <file>file:/Users/jennyb/Documents/Java/FlexProjector/src/ika/gui/GeoInspectorPanel.java</file>
-            <file>file:/Users/jennyb/Documents/Java/FlexProjector/build.xml</file>
-            <file>file:/Users/jennyb/Documents/Java/FlexProjector/src/Jama/util/Maths.java</file>
-            <file>file:/Users/jennyb/Documents/Java/FlexProjector/src/ika/app/ApplicationInfo.java</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>

@@ -1,6 +1,7 @@
 Aitoff, true, approx
 Arden-Close, false
 Boggs Eumorphic, false
+Compact Miller, true
 Cylindrical Equal-Area, true
 Craster Parabolic (Putnins P4), false
 Denoyer Semi-elliptical, true, approx
@@ -28,6 +29,7 @@ Miller Cylindrical I, true
 Mollweide, true
 Natural Earth, true, approx
 Nell-Hammer, true
+Patterson, true
 Putnins P1, true
 Putnins P4', false
 Putnins P5', false
