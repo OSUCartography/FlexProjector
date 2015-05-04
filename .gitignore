@@ -2,3 +2,5 @@
 .DS_Store
 
 *.class
+
+nbproject/private/*

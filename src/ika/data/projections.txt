@@ -28,6 +28,7 @@ Mercator, true
 Miller Cylindrical I, true
 Mollweide, true
 Natural Earth, true, approx
+Natural Earth II, true, approx
 Nell-Hammer, true
 Patterson, true
 Putnins P1, true

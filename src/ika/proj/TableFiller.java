@@ -20,8 +20,8 @@ import org.jdesktop.swingworker.SwingWorker;
  */
 public class TableFiller extends SwingWorker {
     
-    private ProjDistortionTable table;
-    private FlexProjectorModel model;
+    private final ProjDistortionTable table;
+    private final FlexProjectorModel model;
     
     public TableFiller(ProjDistortionTable table, FlexProjectorModel model) {
         this.table = table;
