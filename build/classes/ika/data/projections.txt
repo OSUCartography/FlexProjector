@@ -1,45 +1,50 @@
 Aitoff, true, approx
-Arden-Close, false
-Boggs Eumorphic, false
+Arden-Close, true
+Boggs Eumorphic, true
 Compact Miller, true
 Cylindrical Equal-Area, true
-Craster Parabolic (Putnins P4), false
+Craster Parabolic (Putnins P4), true
 Denoyer Semi-elliptical, true, approx
-Eckert I, false
+Eckert I, true
+Eckert II, true, approx
 Eckert III, true, approx
 Eckert IV, true
 Eckert V, true
-Eckert-Greifendorff, false, approx
+Eckert VI, true
+Eckert-Greifendorff, true, approx
 Equidistant Cylindrical (Plate Carrée), true
 Fahey, true, approx
-Foucaut, false, 
-Foucaut Sinusoidal, false
-Gall (Gall Stereographic), false
+Foucaut, true, 
+Foucaut Sinusoidal, true
+Gall (Gall Stereographic), true
 Ginzburg VIII (TsNIIGAiK 1944), true
-Goode Homolosine, false
+Goode Homolosine, true
 Hammer, true, approx
-Hölzel, false, approx
-Kavrayskiy I, false
+Hölzel, true, approx
+Kavrayskiy I, true
 Kavrayskiy V, true
 Kavrayskiy VII, true
 Larrivée, true, approx
-McBryde-Thomas Flat-Pole Sine (No. 2), false
+McBryde-Thomas Flat-Pole Sine (No. 2), true
 Mercator, true
 Miller Cylindrical I, true
 Mollweide, true
 Natural Earth, true, approx
 Natural Earth II, true, approx
+Nell, true
 Nell-Hammer, true
 Patterson, true
 Putnins P1, true
-Putnins P4', false
-Putnins P5', false
-Quartic Authalic, false
+Putnins P2, true
+Putnins P4', true
+Putnins P5', true
+Quartic Authalic, true
 Robinson, true
 Sinusoidal, true
 van der Grinten (I), true, approx
-Wagner II, false
-Wagner III, false
+Wagner I, true
+Wagner II, true
+Wagner III, true
 Wagner VI, true
 Wagner VII, true, approx
 Winkel I, true

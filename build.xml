@@ -79,7 +79,7 @@
                           identifier="${main.class}"
                           mainclassname="${main.class}"
                           icon="mac/icon.icns"
-                          shortversion="1.0.2"
+                          shortversion="1.0.3"
                           copyright="© Bernhard Jenny 2007–2017"
                           applicationCategory="public.app-category.graphics-design">
             <classpath file="${dist.jar}" />
@@ -88,7 +88,7 @@
             <option value="-Dapple.awt.application.name=Flex Projector"/>
             <option value="-Xmx1000m"/>
         </macbundleapp>
-        <zip destfile="mac/FlexProjectorMac.zip" level="9">
+        <zip destfile="mac/Flex Projector macOS.zip" level="9">
             <zipfileset filemode="755" dir="mac/Flex Projector.app" prefix="Flex Projector.app" />
         </zip>
     </target>
@@ -120,7 +120,7 @@
         <launch4j configFile="win/FlexProjector.xml"  />
         
         <!-- Zip the generated exe file -->
-        <zip destfile="win/FlexProjectorWin.zip">
+        <zip destfile="win/Flex Projector Windows.zip">
             <fileset dir="." includes="win/FlexProjector.exe"/>
         </zip>
         
@@ -130,9 +130,9 @@
     
     <target name="-post-clean">
         <delete file="win/FlexProjector.exe"/>
-        <delete file="win/FlexProjectorWin.zip"/>
+        <delete file="win/Flex Projector Windows.zip"/>
         <delete file="FlexProjectorJar.zip"/>
         <delete file="mac/Flex Projector.app/Contents/Resources/Java/FlexProjector.jar"/>
-        <delete file="mac/FlexProjectorMac.zip"/>
+        <delete file="mac/Flex Projector macOS.zip"/>
     </target>
 </project>
