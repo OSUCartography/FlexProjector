@@ -2,33 +2,33 @@
 	Launch4j (http://launch4j.sourceforge.net/)
 	Cross-platform Java application wrapper for creating Windows native executables.
 
-	Copyright (c) 2004, 2007 Grzegorz Kowal
-
+	Copyright (c) 2004, 2015 Grzegorz Kowal
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:
-
-	    * Redistributions of source code must retain the above copyright notice,
-	      this list of conditions and the following disclaimer.
-	    * Redistributions in binary form must reproduce the above copyright notice,
-	      this list of conditions and the following disclaimer in the documentation
-	      and/or other materials provided with the distribution.
-	    * Neither the name of the Launch4j nor the names of its contributors
-	      may be used to endorse or promote products derived from this software without
-	      specific prior written permission.
-
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-	A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-	CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-	EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-	PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-	LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-	NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	
+	1. Redistributions of source code must retain the above copyright notice,
+	   this list of conditions and the following disclaimer.
+	
+	2. Redistributions in binary form must reproduce the above copyright notice,
+	   this list of conditions and the following disclaimer in the documentation
+	   and/or other materials provided with the distribution.
+	
+	3. Neither the name of the copyright holder nor the names of its contributors
+	   may be used to endorse or promote products derived from this software without
+	   specific prior written permission.
+	
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+	THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+	ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+	FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+	AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+	OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*
@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
 
+import net.sf.launch4j.config.CharsetID;
 import net.sf.launch4j.config.Config;
 import net.sf.launch4j.config.ConfigPersister;
 import net.sf.launch4j.config.Jre;
@@ -102,15 +103,13 @@ public class RcBuilder {
 	public static final int BUNDLED_JRE_64_BIT = 29;
 	public static final int RUNTIME_BITS = 30;
 	public static final int RESTART_ON_CRASH = 31;
+	public static final int BUNDLED_JRE_AS_FALLBACK	= 32;
 
 	public static final int STARTUP_ERR = 101;
 	public static final int BUNDLED_JRE_ERR = 102;
 	public static final int JRE_VERSION_ERR = 103;
 	public static final int LAUNCHER_ERR = 104;
 	public static final int INSTANCE_ALREADY_EXISTS_MSG = 105;
-
-	public static final int USE_64_BIT_RUNTIME = 1;
-	public static final int USE_32_BIT_RUNTIME = 2;
 
 	private final StringBuffer _sb = new StringBuffer();
 
@@ -178,13 +177,19 @@ public class RcBuilder {
 	}
 	
 	private void writeResourceFile(File file) throws IOException {
+		FileOutputStream os = null;
+		OutputStreamWriter osw = null;
 		BufferedWriter w = null;
 
 		try {
-			w = new BufferedWriter(new FileWriter(file));
+			os = new FileOutputStream(file);
+			osw = new OutputStreamWriter(os, "ISO-8859-1");
+			w = new BufferedWriter(osw);
 			w.write(_sb.toString());
 		} finally {
 			Util.close(w);
+			Util.close(osw);
+			Util.close(os);
 		}
 	}
 
@@ -227,7 +232,9 @@ public class RcBuilder {
 				"{\n" + 
 				" BLOCK \"StringFileInfo\"\n" +
 				" {\n" +
-				"  BLOCK \"040904E4\"\n" +	// English
+				"  BLOCK \"");
+		_sb.append(String.format("%04X%04X", v.getLanguage().getId(), CharsetID.MULTILINGUAL.getId()));
+		_sb.append("\"\n" +
 				"  {\n");
 
 		addVerBlockValue("CompanyName", v.getCompanyName());
@@ -235,25 +242,24 @@ public class RcBuilder {
 		addVerBlockValue("FileVersion", v.getTxtFileVersion());
 		addVerBlockValue("InternalName", v.getInternalName());
 		addVerBlockValue("LegalCopyright", v.getCopyright());
+		addVerBlockValue("LegalTrademarks", v.getTrademarks());
 		addVerBlockValue("OriginalFilename", v.getOriginalFilename());
 		addVerBlockValue("ProductName", v.getProductName());
 		addVerBlockValue("ProductVersion", v.getTxtProductVersion());
-		_sb.append("  }\n }\nBLOCK \"VarFileInfo\"\n{\nVALUE \"Translation\", 0x0409, 0x04E4\n}\n}");     
+		_sb.append("  }\n }\nBLOCK \"VarFileInfo\"\n{\nVALUE \"Translation\", ");
+		_sb.append(String.format("0x%04X, 0x%04X", v.getLanguage().getId(), CharsetID.MULTILINGUAL.getId()));
+		_sb.append("\n}\n}");
 	}
 
 	private void addJre(Jre jre) {
 		addWindowsPath(JRE_PATH, jre.getPath());
 		addTrue(BUNDLED_JRE_64_BIT, jre.getBundledJre64Bit());
+		addTrue(BUNDLED_JRE_AS_FALLBACK, jre.getBundledJreAsFallback());
 		addText(JAVA_MIN_VER, jre.getMinVersion());
 		addText(JAVA_MAX_VER, jre.getMaxVersion());
 		addText(JDK_PREFERENCE, String.valueOf(jre.getJdkPreferenceIndex()));
-		
-		String runtimeBits = jre.getRuntimeBits();
-		int use64Bits = Jre.RUNTIME_BITS_64.equals(runtimeBits) || Jre.RUNTIME_BITS_64_AND_32.equals(runtimeBits)
-				? USE_64_BIT_RUNTIME : 0;
-		int use32Bits = Jre.RUNTIME_BITS_32.equals(runtimeBits) || Jre.RUNTIME_BITS_64_AND_32.equals(runtimeBits)
-				? USE_32_BIT_RUNTIME : 0;
-		addInteger(RUNTIME_BITS, use64Bits | use32Bits);
+
+		addInteger(RUNTIME_BITS, jre.getRuntimeBitsIndex() + 1);
 		addInteger(INITIAL_HEAP_SIZE, jre.getInitialHeapSize());
 		addInteger(INITIAL_HEAP_PERCENT, jre.getInitialHeapPercent());
 		addInteger(MAX_HEAP_SIZE, jre.getMaxHeapSize());

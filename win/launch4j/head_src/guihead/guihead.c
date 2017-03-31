@@ -2,7 +2,7 @@
 	Launch4j (http://launch4j.sourceforge.net/)
 	Cross-platform Java application wrapper for creating Windows native executables.
 
-	Copyright (c) 2004, 2007 Grzegorz Kowal
+	Copyright (c) 2004, 2015 Grzegorz Kowal
 							 Sylvain Mina (single instance patch)
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,7 +33,7 @@
 #include "guihead.h"
 
 extern FILE* hLog;
-extern PROCESS_INFORMATION pi;
+extern PROCESS_INFORMATION processInformation;
 
 HWND hWnd;
 DWORD dwExitCode = 0;
@@ -91,6 +91,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 					splashTimeout = DEFAULT_SPLASH_TIMEOUT;
 				}
 			}
+			splashTimeout = splashTimeout * 1000; // to millis
 			splashTimeoutErr = loadBool(SPLASH_TIMEOUT_ERR)
 					&& strstr(lpCmdLine, "--l4j-no-splash-err") == NULL;
 			waitForWindow = loadBool(SPLASH_WAITS_FOR_WINDOW);
@@ -120,7 +121,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	{
 		if (splash || stayAlive)
 		{
-			if (!SetTimer (hWnd, ID_TIMER, 1000 /* 1s */, TimerProc))
+			if (!SetTimer (hWnd, ID_TIMER, TIMER_PROC_INTERVAL, TimerProc))
 			{
 				signalError();
 				return 1;
@@ -188,7 +189,7 @@ BOOL CALLBACK enumwndfn(HWND hwnd, LPARAM lParam)
 {
 	DWORD processId;
 	GetWindowThreadProcessId(hwnd, &processId);
-	if (pi.dwProcessId == processId)
+	if (processInformation.dwProcessId == processId)
 	{
 		LONG styles = GetWindowLong(hwnd, GWL_STYLE);
 		if ((styles & WS_VISIBLE) != 0)
@@ -222,7 +223,7 @@ VOID CALLBACK TimerProc(
 		}
 		else
 		{
-			splashTimeout--;
+			splashTimeout -= TIMER_PROC_INTERVAL;
 			if (waitForWindow)
 			{
 				EnumWindows(enumwndfn, 0);
@@ -230,7 +231,7 @@ VOID CALLBACK TimerProc(
 		}
 	}
 
-	GetExitCodeProcess(pi.hProcess, &dwExitCode);
+	GetExitCodeProcess(processInformation.hProcess, &dwExitCode);
 	if (dwExitCode != STILL_ACTIVE
 			|| !(splash || stayAlive))
 	{

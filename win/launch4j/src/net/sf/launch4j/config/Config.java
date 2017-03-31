@@ -2,33 +2,33 @@
 	Launch4j (http://launch4j.sourceforge.net/)
 	Cross-platform Java application wrapper for creating Windows native executables.
 
-	Copyright (c) 2004, 2007 Grzegorz Kowal
-
+	Copyright (c) 2004, 2015 Grzegorz Kowal
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:
-
-	    * Redistributions of source code must retain the above copyright notice,
-	      this list of conditions and the following disclaimer.
-	    * Redistributions in binary form must reproduce the above copyright notice,
-	      this list of conditions and the following disclaimer in the documentation
-	      and/or other materials provided with the distribution.
-	    * Neither the name of the Launch4j nor the names of its contributors
-	      may be used to endorse or promote products derived from this software without
-	      specific prior written permission.
-
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-	A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-	CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-	EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-	PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-	LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-	NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	
+	1. Redistributions of source code must retain the above copyright notice,
+	   this list of conditions and the following disclaimer.
+	
+	2. Redistributions in binary form must reproduce the above copyright notice,
+	   this list of conditions and the following disclaimer in the documentation
+	   and/or other materials provided with the distribution.
+	
+	3. Neither the name of the copyright holder nor the names of its contributors
+	   may be used to endorse or promote products derived from this software without
+	   specific prior written permission.
+	
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+	THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+	ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+	FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+	AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+	OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*
@@ -63,9 +63,13 @@ public class Config implements IValidatable {
 
 	public static final String GUI_HEADER = "gui";
 	public static final String CONSOLE_HEADER = "console";
+	public static final String JNI_GUI_HEADER_32 = "jniGui32";
+	public static final String JNI_CONSOLE_HEADER_32 = "jniConsole32";
 
 	private static final String[] HEADER_TYPES = new String[] { GUI_HEADER,
-																	CONSOLE_HEADER };
+																CONSOLE_HEADER,
+																JNI_GUI_HEADER_32,
+																JNI_CONSOLE_HEADER_32 };
 
 	private static final String[] PRIORITY_CLASS_NAMES = new String[] { "normal",
 																		"idle",
@@ -119,7 +123,7 @@ public class Config implements IValidatable {
 		if (!Validator.isEmpty(chdir)) {
 			Validator.checkRelativeWinPath(chdir, "chdir",
 					Messages.getString("Config.chdir.relative"));
-			Validator.checkFalse(chdir.toLowerCase().equals("true")	
+			Validator.checkFalse(chdir.toLowerCase().equals("true")
 					|| chdir.toLowerCase().equals("false"),
 					"chdir", Messages.getString("Config.chdir.path"));
 		}
@@ -135,7 +139,7 @@ public class Config implements IValidatable {
 				"supportUrl", Messages.getString("Config.support.url"));
 		Validator.checkIn(getHeaderType(), HEADER_TYPES, "headerType",
 				Messages.getString("Config.header.type"));
-		Validator.checkFalse(getHeaderType().equals(CONSOLE_HEADER) && splash != null,
+		Validator.checkFalse(!isGuiApplication() && splash != null,
 				"headerType",
 				Messages.getString("Config.splash.not.impl.by.console.hdr"));
 		Validator.checkOptStrings(variables,
@@ -147,7 +151,29 @@ public class Config implements IValidatable {
 				Messages.getString("Config.variables.err"));
 		Validator.checkIn(getPriority(), PRIORITY_CLASS_NAMES, "priority",
 				Messages.getString("Config.priority"));
+		checkJniInvariants();
 		jre.checkInvariants();
+	}
+	
+	private void checkJniInvariants() {
+		// TODO: Remove once JNI is fully implemented.
+		if (isJniApplication()) {
+			Validator.checkTrue(".".equals(chdir), "chdir",
+					"Only '.' is allowed in change directory.");
+			Validator.checkTrue(Validator.isEmpty(cmdLine), "cmdLine",
+					"Constant command line arguments not supported.");
+			Validator.checkFalse(stayAlive, "stayAlive",
+					"Stay alive option is not used in JNI, this is the default behavior.");
+			Validator.checkFalse(restartOnCrash, "restartOnCrash",
+					"Restart on crash not supported.");
+			Validator.checkIn(getPriority(), new String[] { "normal" }, "priority",
+					"Process priority is not supported,");
+			Validator.checkNotNull(classPath, "classpath", "classpath");
+			Validator.checkFalse(jre.getBundledJre64Bit(), "jre.bundledJre64Bit",
+					"64-bit bundled JRE not supported.");
+			Validator.checkTrue(Jre.RUNTIME_BITS_32.equals(jre.getRuntimeBits()), "jre.runtimeBits", 
+					"64-bit JRE not supported.");
+		}
 	}
 	
 	public void validate() {
@@ -189,10 +215,19 @@ public class Config implements IValidatable {
 	public void setErrTitle(String errTitle) {
 		this.errTitle = errTitle;
 	}
+	
+	public boolean isGuiApplication() {
+		return GUI_HEADER.equals(headerType) || JNI_GUI_HEADER_32.equals(headerType);
+	}
+	
+	public boolean isJniApplication() {
+		return JNI_GUI_HEADER_32.equals(headerType)
+				|| JNI_CONSOLE_HEADER_32.equals(headerType);
+	}
 
 	/** launch4j header file. */
 	public String getHeaderType() {
-		return headerType.toLowerCase();
+		return headerType;
 	}
 
 	public void setHeaderType(String headerType) {
@@ -215,9 +250,7 @@ public class Config implements IValidatable {
 
 	public List<String> getHeaderObjects() {
 		return isCustomHeaderObjects() ? headerObjects
-				: getHeaderType().equals(GUI_HEADER)
-						? LdDefaults.GUI_HEADER_OBJECTS
-						: LdDefaults.CONSOLE_HEADER_OBJECTS;
+				: LdDefaults.getHeaderObjects(getHeaderTypeIndex());
 	}
 
 	public void setHeaderObjects(List<String> headerObjects) {
@@ -229,7 +262,7 @@ public class Config implements IValidatable {
 	}
 
 	public List<String> getLibs() {
-		return isCustomLibs() ? libs : LdDefaults.LIBS;
+		return isCustomLibs() ? libs : LdDefaults.getLibs(headerType);
 	}
 
 	public void setLibs(List<String> libs) {

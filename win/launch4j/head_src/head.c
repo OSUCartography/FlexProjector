@@ -2,7 +2,7 @@
 	Launch4j (http://launch4j.sourceforge.net/)
 	Cross-platform Java application wrapper for creating Windows native executables.
 
-	Copyright (c) 2004, 2014 Grzegorz Kowal,
+	Copyright (c) 2004, 2015 Grzegorz Kowal,
 							 Ian Roberts (jdk preference patch)
 							 Sylvain Mina (single instance patch)
 
@@ -37,31 +37,58 @@ FILE* hLog;
 BOOL debugAll = FALSE;
 BOOL console = FALSE;
 BOOL wow64 = FALSE;
-BOOL corruptedJreFound = FALSE;
-int runtimeBits = INIT_RUNTIME_BITS;
-int foundJava = NO_JAVA_FOUND;
+char oldPwd[_MAX_PATH];
 
-struct _stat statBuf;
-PROCESS_INFORMATION pi;
-DWORD priority;
+PROCESS_INFORMATION processInformation;
+DWORD processPriority;
 
-char mutexName[STR] = {0};
+struct
+{
+	char title[STR];
+	char msg[BIG_STR];
+	char url[256];
+} error;
 
-char errUrl[256] = {0};
-char errTitle[STR] = LAUNCH4j;
-char errMsg[BIG_STR] = {0};
+struct
+{
+	int runtimeBits;
+	int foundJava;
+	BOOL bundledJreAsFallback;
+	BOOL corruptedJreFound;
+	char originalJavaMinVer[STR];
+	char originalJavaMaxVer[STR];
+	char javaMinVer[STR];
+	char javaMaxVer[STR];
+	char foundJavaVer[STR];
+	char foundJavaKey[_MAX_PATH];
+	char foundJavaHome[_MAX_PATH];
+} search;
 
-char javaMinVer[STR] = {0};
-char javaMaxVer[STR] = {0};
-char foundJavaVer[STR] = {0};
-char foundJavaKey[_MAX_PATH] = {0};
-char foundJavaHome[_MAX_PATH] = {0};
+struct
+{
+	char mainClass[_MAX_PATH];
+	char cmd[_MAX_PATH];
+	char args[MAX_ARGS];
+} launcher;
 
-char oldPwd[_MAX_PATH] = {0};
-char workingDir[_MAX_PATH] = {0};
-char jreHomeDir[_MAX_PATH] = {0};
-char cmd[_MAX_PATH] = {0};
-char args[MAX_ARGS] = {0};
+BOOL initGlobals()
+{
+	hModule = GetModuleHandle(NULL);
+
+	if (hModule == NULL)
+	{
+		return FALSE;
+	}
+
+	strcpy(error.title, LAUNCH4j);
+
+	search.runtimeBits = INIT_RUNTIME_BITS;
+	search.foundJava = NO_JAVA_FOUND;
+	search.bundledJreAsFallback = FALSE;
+	search.corruptedJreFound = FALSE;
+	
+	return TRUE;
+}
 
 FILE* openLogFile(const char* exePath, const int pathLen)
 {
@@ -88,14 +115,19 @@ BOOL initializeLogging(const char *lpCmdLine, const char* exePath, const int pat
 			|| strstr(varValue, "debug") != NULL)
 	{
 		hLog = openLogFile(exePath, pathLen);
+
 		if (hLog == NULL)
 		{
 			return FALSE;
 		}
+
 		debugAll = strstr(lpCmdLine, "--l4j-debug-all") != NULL
 				|| strstr(varValue, "debug-all") != NULL;
 	}
 	
+	debug("\n\nVersion:\t%s\n", VERSION);
+	debug("CmdLine:\t%s %s\n", exePath, lpCmdLine);
+
 	return TRUE;
 }
 
@@ -108,6 +140,7 @@ void setWow64Flag()
 	{
 		fnIsWow64Process(GetCurrentProcess(), &wow64);
 	}
+
 	debug("WOW64:\t\t%s\n", wow64 ? "yes" : "no"); 
 }
 
@@ -120,18 +153,25 @@ void msgBox(const char* text)
 {
     if (console)
 	{
-        printf("%s: %s\n", errTitle, text);
+        if (*error.title)
+        {
+            printf("%s: %s\n", error.title, text);
+        }
+        else
+        {
+            printf("%s\n", text);
+        }
     }
 	else
 	{
-    	MessageBox(NULL, text, errTitle, MB_OK);
+    	MessageBox(NULL, text, error.title, MB_OK);
     }
 }
 
 void signalError()
 {
 	DWORD err = GetLastError();
-	debug("Error msg:\t%s\n", errMsg);
+	debug("Error msg:\t%s\n", error.msg);
 
 	if (err)
 	{
@@ -146,17 +186,17 @@ void signalError()
 			    0,
 			    NULL);
 		debug(ERROR_FORMAT, (LPCTSTR) lpMsgBuf);
-		strcat(errMsg, "\n\n");
-		strcat(errMsg, (LPCTSTR) lpMsgBuf);
+		strcat(error.msg, "\n\n");
+		strcat(error.msg, (LPCTSTR) lpMsgBuf);
 		LocalFree(lpMsgBuf);
 	}
 	
-	msgBox(errMsg);
+	msgBox(error.msg);
 
-	if (*errUrl)
+	if (*error.url)
 	{
-		debug("Open URL:\t%s\n", errUrl);
-		ShellExecute(NULL, "open", errUrl, NULL, NULL, SW_SHOWNORMAL);
+		debug("Open URL:\t%s\n", error.url);
+		ShellExecute(NULL, "open", error.url, NULL, NULL, SW_SHOWNORMAL);
 	}
 
 	closeLogFile();
@@ -272,18 +312,56 @@ BOOL regQueryValue(const char* regPath, unsigned char* buffer,
 	return result;
 }
 
-void regSearch(const HKEY hKey, const char* keyName, const int searchType)
+void formatJavaVersion(char* version, const char* originalVersion)
 {
+    char* updatePart = strchr(originalVersion, '_');
+
+    if (updatePart != NULL)
+    {
+        // skip underscore
+        updatePart++;
+
+        if (strlen(updatePart) < 3)
+        {
+            const int majorVersionLength = updatePart - originalVersion;
+            strncpy(version, originalVersion, majorVersionLength);
+            *(version + majorVersionLength) = 0;
+            strcat(version, "0");
+            strcat(version, updatePart);
+            return;
+        }
+    }
+    
+    strcpy(version, originalVersion);
+}
+
+void regSearch(const char* keyName, const int searchType)
+{
+	HKEY hKey;
+	const DWORD wow64KeyMask = searchType & KEY_WOW64_64KEY;
+
+	debug("%s-bit search:\t%s...\n", wow64KeyMask ? "64" : "32", keyName);
+
+	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+			keyName,
+			0,
+	        KEY_READ | wow64KeyMask,
+			&hKey) == ERROR_SUCCESS)
+	{
+		return;
+	}
+
 	DWORD x = 0;
 	unsigned long versionSize = _MAX_PATH;
 	FILETIME time;
 	char fullKeyName[_MAX_PATH] = {0};
+	char originalVersion[_MAX_PATH] = {0};
 	char version[_MAX_PATH] = {0};
 
 	while (RegEnumKeyEx(
 				hKey,			// handle to key to enumerate
 				x++,			// index of subkey to enumerate
-				version,		// address of buffer for subkey name
+				originalVersion,// address of buffer for subkey name
 				&versionSize,	// address for size of subkey buffer
 				NULL,			// reserved
 				NULL,			// address of buffer for class string
@@ -291,17 +369,18 @@ void regSearch(const HKEY hKey, const char* keyName, const int searchType)
 				&time) == ERROR_SUCCESS)
 	{
 		strcpy(fullKeyName, keyName);
-		appendPath(fullKeyName, version);
+		appendPath(fullKeyName, originalVersion);
 		debug("Check:\t\t%s\n", fullKeyName);
+        formatJavaVersion(version, originalVersion);
 
-		if (strcmp(version, javaMinVer) >= 0
-				&& (!*javaMaxVer || strcmp(version, javaMaxVer) <= 0)
-				&& strcmp(version, foundJavaVer) > 0
+		if (strcmp(version, search.javaMinVer) >= 0
+				&& (!*search.javaMaxVer || strcmp(version, search.javaMaxVer) <= 0)
+				&& strcmp(version, search.foundJavaVer) > 0
 				&& isJavaHomeValid(fullKeyName, searchType))
 		{
-			strcpy(foundJavaVer, version);
-			strcpy(foundJavaKey, fullKeyName);
-			foundJava = searchType;
+			strcpy(search.foundJavaVer, version);
+			strcpy(search.foundJavaKey, fullKeyName);
+			search.foundJava = searchType;
 			debug("Match:\t\t%s\n", version);
 		}
 		else
@@ -311,6 +390,8 @@ void regSearch(const HKEY hKey, const char* keyName, const int searchType)
 
 		versionSize = _MAX_PATH;
 	}
+
+	RegCloseKey(hKey);
 }
 
 BOOL isJavaHomeValid(const char* keyName, const int searchType)
@@ -349,11 +430,11 @@ BOOL isJavaHomeValid(const char* keyName, const int searchType)
 
 	if (valid)
 	{
-		strcpy(foundJavaHome, path);
+		strcpy(search.foundJavaHome, path);
 	}
 	else
 	{
-		corruptedJreFound = TRUE;
+		search.corruptedJreFound = TRUE;
 	}
 
 	return valid;
@@ -361,61 +442,75 @@ BOOL isJavaHomeValid(const char* keyName, const int searchType)
 
 BOOL isLauncherPathValid(const char* path)
 {
-	char javaw[_MAX_PATH] = {0};
+	struct _stat statBuf;
+	char launcherPath[_MAX_PATH] = {0};
 	BOOL result = FALSE;
+
 	if (*path)
 	{
-		strcpy(javaw, path);
-		appendJavaw(javaw);
-		result = _stat(javaw, &statBuf) == 0;
+		strcpy(launcherPath, path);
+		appendLauncher(launcherPath);
+		result = _stat(launcherPath, &statBuf) == 0;
+
 		if (!result)
 		{
 			// Don't display additional info in the error popup.
 			SetLastError(0);
 		}
-	}	
-	debug("Check launcher:\t%s %s\n", javaw, result ? "(OK)" : "(not found)");
+	}
+
+	debug("Check launcher:\t%s %s\n", launcherPath, result ? "(OK)" : "(not found)");
 	return result;
 }
 
 void regSearchWow(const char* keyName, const int searchType)
 {
-	HKEY hKey;
-	if (runtimeBits == INIT_RUNTIME_BITS)
+	if (search.runtimeBits == INIT_RUNTIME_BITS)
 	{
-		runtimeBits = loadInt(RUNTIME_BITS);
+		search.runtimeBits = loadInt(RUNTIME_BITS);
 	}
 
-	if ((runtimeBits & USE_64_BIT_RUNTIME) && wow64)
+	switch (search.runtimeBits)
 	{
-		debug("64-bit search:\t%s...\n", keyName);
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-				keyName,
-				0,
-    	        KEY_READ | KEY_WOW64_64KEY,
-				&hKey) == ERROR_SUCCESS)
-		{
-			regSearch(hKey, keyName, searchType | KEY_WOW64_64KEY);
-			RegCloseKey(hKey);
-			if ((foundJava & KEY_WOW64_64KEY) != NO_JAVA_FOUND)
+		case USE_64_BIT_RUNTIME:
+			if (wow64)
 			{
-				return;
+				regSearch(keyName, searchType | KEY_WOW64_64KEY);
 			}
-		}
-	}
+			break;
 
-	if (runtimeBits & USE_32_BIT_RUNTIME)
-	{
-		debug("32-bit search:\t%s...\n", keyName);
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-				keyName,
-				0,
-	            KEY_READ,
-				&hKey) == ERROR_SUCCESS)
-		{
-			regSearch(hKey, keyName, searchType);
-			RegCloseKey(hKey);
-		}
+		case USE_64_AND_32_BIT_RUNTIME:
+			if (wow64)
+			{
+				regSearch(keyName, searchType | KEY_WOW64_64KEY);
+				
+				if ((search.foundJava & KEY_WOW64_64KEY) != NO_JAVA_FOUND)
+				{
+					break;
+				}
+			}
+
+			regSearch(keyName, searchType);
+			break;
+
+		case USE_32_AND_64_BIT_RUNTIME:
+			regSearch(keyName, searchType);
+
+			if (search.foundJava != NO_JAVA_FOUND
+				&& (search.foundJava & KEY_WOW64_64KEY) == NO_JAVA_FOUND)
+			{
+				break;
+			}
+
+			if (wow64)
+			{
+				regSearch(keyName, searchType | KEY_WOW64_64KEY);
+			}
+			break;
+
+		case USE_32_BIT_RUNTIME:
+			regSearch(keyName, searchType);
+			break;
 	}
 }
 
@@ -447,18 +542,18 @@ BOOL findJavaHome(char* path, const int jdkPreference)
 					"SOFTWARE\\JavaSoft\\Java Development Kit",
 					jdkPreference);
 
-	if (foundJava == NO_JAVA_FOUND)
+	if (search.foundJava == NO_JAVA_FOUND)
 	{
 		regSearchJreSdk("SOFTWARE\\IBM\\Java2 Runtime Environment",
 						"SOFTWARE\\IBM\\Java Development Kit",
 						jdkPreference);
 	}
 	
-	if (foundJava != NO_JAVA_FOUND)
+	if (search.foundJava != NO_JAVA_FOUND)
 	{
-		strcpy(path, foundJavaHome);
-		debug("Runtime used:\t%s (%s-bit)\n", foundJavaVer,
-				(foundJava & KEY_WOW64_64KEY) != NO_JAVA_FOUND ? "64" : "32");
+		strcpy(path, search.foundJavaHome);
+		debug("Runtime used:\t%s (%s-bit)\n", search.foundJavaVer,
+				(search.foundJava & KEY_WOW64_64KEY) != NO_JAVA_FOUND ? "64" : "32");
 		return TRUE;	
 	}
 	
@@ -486,7 +581,7 @@ void appendPath(char* basepath, const char* path)
 	strcat(basepath, path);
 }
 
-void appendJavaw(char* jrePath)
+void appendLauncher(char* jrePath)
 {
     if (console)
 	{
@@ -548,7 +643,7 @@ BOOL expandVars(char *dst, const char *src, const char *exePath, const int pathL
 			}
             else if (strcmp(varName, "JREHOMEDIR") == 0)
 			{
-                strcat(dst, jreHomeDir);
+                strcat(dst, search.foundJavaHome);
 			}
 			else if (strstr(varName, HKEY_STR) == varName)
 			{
@@ -596,7 +691,7 @@ void appendHeapSize(char *dst, const int megabytesID, const int percentID,
 
 	if (heapSizeMb > 0)
 	{
-		if (!(foundJava & KEY_WOW64_64KEY) && heapSizeMb > mbLimit32)
+		if (!(search.foundJava & KEY_WOW64_64KEY) && heapSizeMb > mbLimit32)
 		{
 			debug("Heap limit:\tReduced %d MB heap size to 32-bit maximum %d MB\n",
 					heapSizeMb, mbLimit32);
@@ -665,43 +760,12 @@ void setJvmOptions(char *jvmOptions, const char *exePath)
 	}	
 }
 
-int prepare(const char *lpCmdLine)
+BOOL createMutex()
 {
-	char tmp[MAX_ARGS] = {0};
-	hModule = GetModuleHandle(NULL);
-	if (hModule == NULL)
-	{
-		return FALSE;
-	}
+	char mutexName[STR] = {0};
 
-	// Get executable path
-	char exePath[_MAX_PATH] = {0};
-	int pathLen = getExePath(exePath);
-	if (pathLen == -1)
-	{
-		return FALSE;
-	}
-
-	if (!initializeLogging(lpCmdLine, exePath, pathLen))
-	{
-		return FALSE;
-	}
-
-	debug("\n\nVersion:\t%s\n", VERSION);
-	debug("CmdLine:\t%s %s\n", exePath, lpCmdLine);
-    setWow64Flag();
-
-	// Set default error message, title and optional support web site url.
-	loadString(SUPPORT_URL, errUrl);
-	loadString(ERR_TITLE, errTitle);
-	if (!loadString(STARTUP_ERR, errMsg))
-	{
-		debug(ERROR_FORMAT, "Startup error message not defined.");
-		return FALSE;			
-	}
-
-	// Single instance
 	loadString(MUTEX_NAME, mutexName);
+
 	if (*mutexName)
 	{
 		SECURITY_ATTRIBUTES security;
@@ -709,112 +773,188 @@ int prepare(const char *lpCmdLine)
 		security.bInheritHandle = TRUE;
 		security.lpSecurityDescriptor = NULL;
 		CreateMutexA(&security, FALSE, mutexName);
+
 		if (GetLastError() == ERROR_ALREADY_EXISTS)
 		{
 			debug(ERROR_FORMAT, "Instance already exists.");
-			return ERROR_ALREADY_EXISTS;
+			return FALSE;
 		}
 	}
 	
-	// Working dir
-	char tmp_path[_MAX_PATH] = {0};
+	return TRUE;
+}
+
+void setWorkingDirectory(const char *exePath, const int pathLen)
+{
+	char workingDir[_MAX_PATH] = {0};
+	char tmpPath[_MAX_PATH] = {0};
+
 	GetCurrentDirectory(_MAX_PATH, oldPwd);
-	if (loadString(CHDIR, tmp_path))
+
+	if (loadString(CHDIR, tmpPath))
 	{
 		strncpy(workingDir, exePath, pathLen);
-		appendPath(workingDir, tmp_path);
+		appendPath(workingDir, tmpPath);
 		_chdir(workingDir);
 		debug("Working dir:\t%s\n", workingDir);
 	}
+}
 
-	// Use bundled jre or find java
-	if (loadString(JRE_PATH, tmp_path))
+BOOL bundledJreSearch(const char *exePath, const int pathLen)
+{
+	char tmpPath[_MAX_PATH] = {0};
+
+	if (loadString(JRE_PATH, tmpPath))
 	{
 		char jrePath[MAX_ARGS] = {0};
-		expandVars(jrePath, tmp_path, exePath, pathLen);
+		expandVars(jrePath, tmpPath, exePath, pathLen);
 		debug("Bundled JRE:\t%s\n", jrePath);
+
 		if (jrePath[0] == '\\' || jrePath[1] == ':')
 		{
 			// Absolute
-			strcpy(cmd, jrePath);
+			strcpy(launcher.cmd, jrePath);
 		}
 		else
 		{
 			// Relative
-			strncpy(cmd, exePath, pathLen);
-			appendPath(cmd, jrePath);
+			strncpy(launcher.cmd, exePath, pathLen);
+			appendPath(launcher.cmd, jrePath);
 		}
 
-		if (isLauncherPathValid(cmd))
+		if (isLauncherPathValid(launcher.cmd))
 		{
-			foundJava = (wow64 && loadBool(BUNDLED_JRE_64_BIT))
+			search.foundJava = (wow64 && loadBool(BUNDLED_JRE_64_BIT))
 				? FOUND_BUNDLED | KEY_WOW64_64KEY
 				: FOUND_BUNDLED;
+			strcpy(search.foundJavaHome, launcher.cmd);
+			return TRUE;
 		}
     }
-    
-	if (foundJava == NO_JAVA_FOUND)
+
+    return FALSE;
+}
+
+BOOL installedJreSearch()
+{
+	return *search.javaMinVer && findJavaHome(launcher.cmd, loadInt(JDK_PREFERENCE));
+}
+
+void createJreSearchError()
+{
+	if (*search.javaMinVer)
 	{
-		if (!loadString(JAVA_MIN_VER, javaMinVer))
+		loadString(JRE_VERSION_ERR, error.msg);
+		strcat(error.msg, " ");
+		strcat(error.msg, search.originalJavaMinVer);
+	
+		if (*search.javaMaxVer)
 		{
-			loadString(BUNDLED_JRE_ERR, errMsg);
-			return FALSE;
+			strcat(error.msg, " - ");
+			strcat(error.msg, search.originalJavaMaxVer);
 		}
-
-		loadString(JAVA_MAX_VER, javaMaxVer);
-		if (!findJavaHome(cmd, loadInt(JDK_PREFERENCE)))
+	
+		if (search.runtimeBits == USE_64_BIT_RUNTIME
+				|| search.runtimeBits == USE_32_BIT_RUNTIME)
 		{
-			loadString(JRE_VERSION_ERR, errMsg);
-			strcat(errMsg, " ");
-			strcat(errMsg, javaMinVer);
-
-			if (*javaMaxVer)
+			strcat(error.msg, " (");
+			strcat(error.msg, search.runtimeBits == USE_64_BIT_RUNTIME ? "64" : "32");
+			strcat(error.msg, "-bit)");
+		}			
+		
+		if (search.corruptedJreFound)
+		{
+			char launcherErrMsg[BIG_STR] = {0};
+	
+			if (loadString(LAUNCHER_ERR, launcherErrMsg))
 			{
-				strcat(errMsg, " - ");
-				strcat(errMsg, javaMaxVer);
+				strcat(error.msg, "\n");
+				strcat(error.msg, launcherErrMsg);
 			}
+		}
+	
+		loadString(DOWNLOAD_URL, error.url);
+	}
+	else
+	{
+		loadString(BUNDLED_JRE_ERR, error.msg);
+	}
+}
 
-			if (runtimeBits == USE_64_BIT_RUNTIME
-					|| runtimeBits == USE_32_BIT_RUNTIME)
-			{
-				strcat(errMsg, " (");
-				strcat(errMsg, runtimeBits == USE_64_BIT_RUNTIME ? "64" : "32");
-				strcat(errMsg, "-bit)");
-			}			
-			
-			if (corruptedJreFound)
-			{
-				char launcherErrMsg[BIG_STR] = {0};
+BOOL jreSearch(const char *exePath, const int pathLen)
+{
+	BOOL result = TRUE;
 
-				if (loadString(LAUNCHER_ERR, launcherErrMsg))
-				{
-					strcat(errMsg, "\n");
-					strcat(errMsg, launcherErrMsg);
-				}
-			}
+	search.bundledJreAsFallback = loadBool(BUNDLED_JRE_AS_FALLBACK);
+	loadString(JAVA_MIN_VER, search.originalJavaMinVer);
+	formatJavaVersion(search.javaMinVer, search.originalJavaMinVer);
+	loadString(JAVA_MAX_VER, search.originalJavaMaxVer);
+    formatJavaVersion(search.javaMaxVer, search.originalJavaMaxVer);
 
-			loadString(DOWNLOAD_URL, errUrl);
-			return FALSE;
+	if (search.bundledJreAsFallback)
+	{
+		if (!installedJreSearch())
+		{
+			result = bundledJreSearch(exePath, pathLen);
 		}
 	}
+	else
+	{
+		if (!bundledJreSearch(exePath, pathLen))
+		{
+			result = installedJreSearch();
+		}
+	}
+	
+	if (!result)
+	{
+		createJreSearchError();
+	}
 
-	// Store the JRE Home Dir
-	strcpy(jreHomeDir, cmd);
+	return result;
+}
 
-    // Append a path to the Path environment variable
+/*
+ * Append a path to the Path environment variable
+ */
+BOOL appendToPathVar(const char* path)
+{
+	char chBuf[MAX_VAR_SIZE] = {0};
+	const int pathSize = GetEnvironmentVariable("Path", chBuf, MAX_VAR_SIZE);
+
+	if (MAX_VAR_SIZE - pathSize - 1 < strlen(path))
+	{
+		return FALSE;
+	}
+
+	strcat(chBuf, ";");
+	strcat(chBuf, path);
+	return SetEnvironmentVariable("Path", chBuf);
+}
+
+BOOL appendJreBinToPathVar()
+{
+	// Append a path to the Path environment variable
 	char jreBinPath[_MAX_PATH] = {0};
-	strcpy(jreBinPath, cmd);
+	strcpy(jreBinPath, launcher.cmd);
 	strcat(jreBinPath, "\\bin");
+
 	if (!appendToPathVar(jreBinPath))
 	{
 		debug(ERROR_FORMAT, "appendToPathVar failed.");
 		return FALSE;
 	}
+	
+	return TRUE;
+}
 
-	// Set environment variables
+void setEnvironmentVariables(const char *exePath, const int pathLen)
+{
+	char tmp[MAX_ARGS] = {0};
 	char envVars[MAX_VAR_SIZE] = {0};
 	loadString(ENV_VARIABLES, envVars);
 	char *var = strtok(envVars, "\t");
+
 	while (var != NULL)
 	{
 		char *varValue = strchr(var, '=');
@@ -825,106 +965,103 @@ int prepare(const char *lpCmdLine)
 		SetEnvironmentVariable(var, tmp);
 		var = strtok(NULL, "\t"); 
 	}
-	*tmp = 0;
+}
 
-	// Process priority
-	priority = loadInt(PRIORITY_CLASS);
-
-	// Launcher
-	appendJavaw(cmd);
-
-	// Heap sizes
-	appendHeapSizes(args);
-
-	// JVM options
-	char jvmOptions[MAX_ARGS] = {0};
-	setJvmOptions(jvmOptions, exePath);
-
-    // Expand environment %variables%
-	expandVars(args, jvmOptions, exePath, pathLen);
-
-	// MainClass + Classpath or Jar
-	char mainClass[STR] = {0};
+void setMainClassAndClassPath(const char *exePath, const int pathLen)
+{
+	char classPath[MAX_ARGS] = {0};
+	char expandedClassPath[MAX_ARGS] = {0};
 	char jar[_MAX_PATH] = {0};
-
+	char fullFileName[_MAX_PATH] = {0};
 	const BOOL wrapper = loadBool(WRAPPER);
 	loadString(JAR, jar);
 
-	if (loadString(MAIN_CLASS, mainClass))
+	if (loadString(MAIN_CLASS, launcher.mainClass))
 	{
-		if (!loadString(CLASSPATH, tmp))
+		if (!loadString(CLASSPATH, classPath))
 		{
 			debug("Info:\t\tClasspath not defined.\n");
 		}
-		char exp[MAX_ARGS] = {0};
-		expandVars(exp, tmp, exePath, pathLen);
-		strcat(args, "-classpath \"");
+		
+		expandVars(expandedClassPath, classPath, exePath, pathLen);
+		strcat(launcher.args, "-classpath \"");
+
 		if (wrapper)
 		{
-			appendAppClasspath(args, exePath);
+			appendAppClasspath(launcher.args, exePath);
 		}
 		else if (*jar)
 		{
-			appendAppClasspath(args, jar);
+			appendAppClasspath(launcher.args, jar);
 		}
 
-		// Deal with wildcards or >> strcat(args, exp); <<
-		char* cp = strtok(exp, ";");
+		// Deal with wildcards or >> strcat(launcherArgs, exp); <<
+		char* cp = strtok(expandedClassPath, ";");
+
 		while(cp != NULL)
 		{
 			debug("Add classpath:\t%s\n", cp);
 			if (strpbrk(cp, "*?") != NULL)
 			{
-				int len = strrchr(cp, '\\') - cp + 1;
-				strncpy(tmp_path, cp, len);
-				char* filename = tmp_path + len;
-				*filename = 0;
+				char* lastBackslash = strrchr(cp, '\\');
+				int pathLen = lastBackslash != NULL ? lastBackslash - cp + 1 : 0;
+				*fullFileName = 0;
+				strncpy(fullFileName, cp, pathLen);
+				char* fileName = fullFileName + pathLen;
+				*fileName = 0;
 				struct _finddata_t c_file;
 				long hFile;
+
 				if ((hFile = _findfirst(cp, &c_file)) != -1L)
 				{
 					do
 					{
-						strcpy(filename, c_file.name);
-						appendAppClasspath(args, tmp_path);
-						debug("      \"      :\t%s\n", tmp_path);
+						strcpy(fileName, c_file.name);
+						appendAppClasspath(launcher.args, fullFileName);
+						debug("      \"      :\t%s\n", fullFileName);
 					} while (_findnext(hFile, &c_file) == 0);
 				}
+
 				_findclose(hFile);
 			}
 			else
 			{
-				appendAppClasspath(args, cp);
+				appendAppClasspath(launcher.args, cp);
 			}
 			cp = strtok(NULL, ";");
-		} 
-		*(args + strlen(args) - 1) = 0;
+		}
 
-		strcat(args, "\" ");
-		strcat(args, mainClass);
+		*(launcher.args + strlen(launcher.args) - 1) = 0;
+		strcat(launcher.args, "\" ");
+		strcat(launcher.args, launcher.mainClass);
 	}
 	else if (wrapper)
 	{
-       	strcat(args, "-jar \"");
-		strcat(args, exePath);
-   		strcat(args, "\"");
+       	strcat(launcher.args, "-jar \"");
+		strcat(launcher.args, exePath);
+   		strcat(launcher.args, "\"");
     }
 	else
 	{
-       	strcat(args, "-jar \"");
-        strncat(args, exePath, pathLen);
-        appendPath(args, jar);
-       	strcat(args, "\"");
+       	strcat(launcher.args, "-jar \"");
+        strncat(launcher.args, exePath, pathLen);
+        appendPath(launcher.args, jar);
+       	strcat(launcher.args, "\"");
     }
+}
 
-	// Constant command line args
+void setCommandLineArgs(const char *lpCmdLine)
+{
+	char tmp[MAX_ARGS] = {0};
+
+	// Constant command line arguments
 	if (loadString(CMD_LINE, tmp))
 	{
-		strcat(args, " ");
-		strcat(args, tmp);
+		strcat(launcher.args, " ");
+		strcat(launcher.args, tmp);
 	}
 
-	// Command line args
+	// Command line arguments
 	if (*lpCmdLine)
 	{
 		strcpy(tmp, lpCmdLine);
@@ -943,60 +1080,107 @@ int prepare(const char *lpCmdLine)
 		}
 		if (*tmp)
 		{
-			strcat(args, " ");
-			strcat(args, tmp);
+			strcat(launcher.args, " ");
+			strcat(launcher.args, tmp);
 		}
 	}
+}
 
-	debug("Launcher:\t%s\n", cmd);
-	debug("Launcher args:\t%s\n", args);
-	debug("Args length:\t%d/32768 chars\n", strlen(args));
+int prepare(const char *lpCmdLine)
+{
+	if (!initGlobals())
+	{
+		return FALSE;
+	}
+
+	// Get executable path
+	char exePath[_MAX_PATH] = {0};
+	int pathLen = getExePath(exePath);
+
+	if (pathLen == -1)
+	{
+		return FALSE;
+	}
+
+	if (!initializeLogging(lpCmdLine, exePath, pathLen))
+	{
+		return FALSE;
+	}
+
+    setWow64Flag();
+
+	// Set default error message, title and optional support web site url.
+	loadString(ERR_TITLE, error.title);
+	loadString(SUPPORT_URL, error.url);
+
+	if (!loadString(STARTUP_ERR, error.msg))
+	{
+		debug(ERROR_FORMAT, "Startup error message not defined.");
+		return FALSE;			
+	}
+
+	// Single instance
+	if (!createMutex())
+	{
+		return ERROR_ALREADY_EXISTS;
+	}
+
+	setWorkingDirectory(exePath, pathLen);
+    
+	if (!jreSearch(exePath, pathLen))
+    {
+		return FALSE;
+	}
+
+	if (!appendJreBinToPathVar())
+	{
+		return FALSE;
+	}
+
+	setEnvironmentVariables(exePath, pathLen);
+	processPriority = loadInt(PRIORITY_CLASS);
+	appendLauncher(launcher.cmd);
+	appendHeapSizes(launcher.args);
+
+	char jvmOptions[MAX_ARGS] = {0};
+	setJvmOptions(jvmOptions, exePath);
+	expandVars(launcher.args, jvmOptions, exePath, pathLen);
+	setMainClassAndClassPath(exePath, pathLen);
+	setCommandLineArgs(lpCmdLine);
+
+	debug("Launcher:\t%s\n", launcher.cmd);
+	debug("Launcher args:\t%s\n", launcher.args);
+	debug("Args length:\t%d/32768 chars\n", strlen(launcher.args));
 	return TRUE;
 }
 
 void closeProcessHandles()
 {
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-}
-
-/*
- * Append a path to the Path environment variable
- */
-BOOL appendToPathVar(const char* path)
-{
-	char chBuf[MAX_VAR_SIZE] = {0};
-
-	const int pathSize = GetEnvironmentVariable("Path", chBuf, MAX_VAR_SIZE);
-	if (MAX_VAR_SIZE - pathSize - 1 < strlen(path))
-	{
-		return FALSE;
-	}
-	strcat(chBuf, ";");
-	strcat(chBuf, path);
-	return SetEnvironmentVariable("Path", chBuf);
+	CloseHandle(processInformation.hThread);
+	CloseHandle(processInformation.hProcess);
 }
 
 BOOL execute(const BOOL wait, DWORD *dwExitCode)
 {
 	STARTUPINFO si;
-    memset(&pi, 0, sizeof(pi));
+
+    memset(&processInformation, 0, sizeof(processInformation));
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
 
 	char cmdline[MAX_ARGS] = {0};
     strcpy(cmdline, "\"");
-	strcat(cmdline, cmd);
+	strcat(cmdline, launcher.cmd);
 	strcat(cmdline, "\" ");
-	strcat(cmdline, args);
+	strcat(cmdline, launcher.args);
 
 	if (CreateProcess(NULL, cmdline, NULL, NULL,
-			TRUE, priority, NULL, NULL, &si, &pi))
+			TRUE, processPriority, NULL, NULL, &si, &processInformation))
 	{
 		if (wait)
 		{
-			WaitForSingleObject(pi.hProcess, INFINITE);
-			GetExitCodeProcess(pi.hProcess, dwExitCode);
+			WaitForSingleObject(processInformation.hProcess, INFINITE);
+			GetExitCodeProcess(processInformation.hProcess, dwExitCode);
 			closeProcessHandles();
 		}
 		else
@@ -1010,3 +1194,19 @@ BOOL execute(const BOOL wait, DWORD *dwExitCode)
 	*dwExitCode = -1;
 	return FALSE;
 }
+
+const char* getJavaHome()
+{
+	return search.foundJavaHome;
+}
+
+const char* getMainClass()
+{
+	return launcher.mainClass;	
+}
+
+const char* getLauncherArgs()
+{
+    return launcher.args;    
+}
+
