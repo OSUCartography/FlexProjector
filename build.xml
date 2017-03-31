@@ -79,7 +79,7 @@
                           identifier="${main.class}"
                           mainclassname="${main.class}"
                           icon="mac/icon.icns"
-                          shortversion="1.0.3"
+                          shortversion="1.0.4"
                           copyright="© Bernhard Jenny 2007–2017"
                           applicationCategory="public.app-category.graphics-design">
             <classpath file="${dist.jar}" />
