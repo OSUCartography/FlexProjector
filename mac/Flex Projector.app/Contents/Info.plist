@@ -1,44 +1,45 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" ?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleAllowMixedLocalizations</key>
-	<string>true</string>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>English</string>
-	<key>CFBundleExecutable</key>
-	<string>JavaApplicationStub</string>
-	<key>CFBundleGetInfoString</key>
-	<string>Flex Projector © Bernhard Jenny 2007-2015</string>
-	<key>CFBundleIconFile</key>
-	<string>icon.icns</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>Flex Projector</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.0.1</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>1</string>
-	<key>Java</key>
-	<dict>
-		<key>ClassPath</key>
-		<string>$JAVAROOT/FlexProjector.jar</string>
-		<key>JVMVersion</key>
-		<string>1.6*</string>
-		<key>MainClass</key>
-		<string>ika.app.Main</string>
-		<key>Properties</key>
-		<dict>
-			<key>apple.laf.useScreenMenuBar</key>
-			<string>true</string>
-		</dict>
-		<key>VMOptions</key>
-		<string>-Xms64m -Xmx2000m</string>
-	</dict>
+<key>CFBundleDevelopmentRegion</key>
+<string>English</string>
+<key>CFBundleExecutable</key>
+<string>JavaAppLauncher</string>
+<key>CFBundleIconFile</key>
+<string>icon.icns</string>
+<key>CFBundleIdentifier</key>
+<string>ika.app.Main</string>
+<key>CFBundleDisplayName</key>
+<string>Flex Projector</string>
+<key>CFBundleInfoDictionaryVersion</key>
+<string>6.0</string>
+<key>CFBundleName</key>
+<string>Flex Projector</string>
+<key>CFBundlePackageType</key>
+<string>APPL</string>
+<key>CFBundleShortVersionString</key>
+<string>1.0.2</string>
+<key>CFBundleSignature</key>
+<string>????</string>
+<key>CFBundleVersion</key>
+<string>1</string>
+<key>NSHumanReadableCopyright</key>
+<string>© Bernhard Jenny 2007–2017</string>
+<key>LSApplicationCategoryType</key>
+<string>public.app-category.graphics-design</string>
+<key>JVMMainClassName</key>
+<string>ika.app.Main</string>
+<key>JVMOptions</key>
+<array>
+<string>-Dapple.laf.useScreenMenuBar=true</string>
+<string>-Dcom.apple.macos.useScreenMenuBar=true</string>
+<string>-Dapple.awt.application.name=Flex Projector</string>
+<string>-Xmx1000m</string>
+</array>
+<key>JVMArguments</key>
+<array>
+</array>
 </dict>
 </plist>
+

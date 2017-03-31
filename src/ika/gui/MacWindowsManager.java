@@ -7,11 +7,8 @@
 
 package ika.gui;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import net.roydesign.mac.MRJAdapter;
 
 /**
  * Mac OS X specific code. Integrates a Java application to the standard Mac

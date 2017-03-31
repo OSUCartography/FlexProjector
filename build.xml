@@ -66,6 +66,33 @@
     nbproject/build-impl.xml file. 
 
     -->
+    
+    
+    <taskdef name="macbundleapp"
+             classname="com.oracle.appbundler.AppBundlerTask"   
+             classpath="mac/appbundler-1.0.jar" />
+
+    <target name="run.macappbundler">
+        <macbundleapp outputdirectory="mac/"
+                          name="Flex Projector"
+                          displayname="Flex Projector"
+                          identifier="${main.class}"
+                          mainclassname="${main.class}"
+                          icon="mac/icon.icns"
+                          shortversion="1.0.2"
+                          copyright="© Bernhard Jenny 2007–2017"
+                          applicationCategory="public.app-category.graphics-design">
+            <classpath file="${dist.jar}" />
+            <option value="-Dapple.laf.useScreenMenuBar=true"/>
+            <option value="-Dcom.apple.macos.useScreenMenuBar=true"/>
+            <option value="-Dapple.awt.application.name=Flex Projector"/>
+            <option value="-Xmx1000m"/>
+        </macbundleapp>
+        <zip destfile="mac/FlexProjectorMac.zip" level="9">
+            <zipfileset filemode="755" dir="mac/Flex Projector.app" prefix="Flex Projector.app" />
+        </zip>
+    </target>
+        
     <target name="-post-jar">
         
         <!-- Combine all jar files into a single jar. -->
@@ -73,26 +100,11 @@
             <zipfileset src="lib/JMapProjLib.jar"/>
             <zipfileset src="${libs.swing-layout.classpath}"/>
             <zipfileset src="lib/jai_imageio.jar"/>
-            <zipfileset src="lib/MRJAdapter.jar"/>
             <zipfileset src="lib/iText-2.1.3.jar"/>
             <manifest>
                 <attribute value="${main.class}" name="Main-Class"/>
             </manifest>
         </jar>
-        
-        <!-- Create a Mac OS X program: copy the jar file into the app bundle. -->
-        <copy overwrite="true" file="./dist/FlexProjector.jar" 
-              tofile="./mac/Flex Projector.app/Contents/Resources/Java/FlexProjector.jar"/>
-              
-        <!-- change the modification date of the Mac OS X app bundle. This does 
-        not change the creation data unfortunately-->
-        <touch>
-            <fileset dir="./mac/Flex Projector.app/" casesensitive="yes"/>
-        </touch>
-        
-        <zip destfile="./mac/FlexProjectorMac.zip" level="9">
-            <zipfileset filemode="755" dir="mac/Flex Projector.app" prefix="Flex Projector.app" />
-        </zip>
         
         <!-- Zip jar file in dist folder -->
         <zip destfile="FlexProjectorJar.zip">
@@ -110,7 +122,10 @@
         <!-- Zip the generated exe file -->
         <zip destfile="win/FlexProjectorWin.zip">
             <fileset dir="." includes="win/FlexProjector.exe"/>
-        </zip>        
+        </zip>
+        
+        <antcall target="run.macappbundler"/>
+        
     </target>
     
     <target name="-post-clean">
