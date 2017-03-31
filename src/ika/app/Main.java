@@ -37,16 +37,7 @@ public class Main {
             e.printStackTrace();
         }
         
-        // set the Quaqua Look and Feel in the UIManager to use the mac color chooser
-        try {
-            if (ika.utils.Sys.isMacOSX()) {
-                UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        // set icon for JOptionPane dialogs. This is done automatically on Mac 10.5.
+        // set icon for JOptionPane dialogs. This is done automatically on Mac 10.5 and later
         if (!ika.utils.Sys.isMacOSX_10_5_orHigherWithJava5()) {
             java.util.Properties props
                     = ika.utils.PropertiesLoader.loadProperties("ika.app.Application");

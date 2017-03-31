@@ -35,6 +35,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -43,6 +44,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -4287,7 +4290,13 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
     private void helpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpButtonActionPerformed
         Properties props = PropertiesLoader.loadProperties("ika.app.Application.properties");
         String url = props.getProperty("HelpSizeWebPage");
-        ika.utils.BrowserLauncherWrapper.openURL(url);
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().browse(new URI(url));
+            } catch (Exception ex) {
+                Logger.getLogger(FlexProjectorWindow.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }//GEN-LAST:event_helpButtonActionPerformed
 
     private void verticalScaleSlidersliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_verticalScaleSlidersliderStateChanged

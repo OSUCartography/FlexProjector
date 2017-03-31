@@ -12,7 +12,7 @@ import com.jhlabs.map.proj.Projection;
 import ika.geo.FlexProjectorModel;
 import ika.gui.ProjDistortionTable;
 import java.util.List;
-import org.jdesktop.swingworker.SwingWorker;
+import javax.swing.SwingWorker;
 
 /**
  *

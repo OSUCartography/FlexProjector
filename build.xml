@@ -72,21 +72,9 @@
         <jar compress="true" destfile="${dist.jar}" update="true">
             <zipfileset src="lib/JMapProjLib.jar"/>
             <zipfileset src="${libs.swing-layout.classpath}"/>
-            <zipfileset src="lib/BrowserLauncher2-1_3.jar"/>
             <zipfileset src="lib/jai_imageio.jar"/>
             <zipfileset src="lib/MRJAdapter.jar"/>
-            <zipfileset src="lib/swing-worker-1.2.jar"/>
             <zipfileset src="lib/iText-2.1.3.jar"/>
-            <manifest>
-                <attribute value="${main.class}" name="Main-Class"/>
-            </manifest>
-        </jar>
-        
-        <!-- Add mac color chooser to mac and JAR version. -->
-        <jar compress="true" 
-             destfile="./dist/FlexProjector.jar" 
-             update="true">
-            <zipfileset src="lib/quaqua-colorchooser-only.jar"/>
             <manifest>
                 <attribute value="${main.class}" name="Main-Class"/>
             </manifest>

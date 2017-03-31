@@ -1,6 +1,17 @@
 
 .DS_Store
-
-*.class
+.class
 
 nbproject/private/*
+build/*
+dist/*
+
+win/FlexProjector.exe
+
+win/FlexProjectorWin.zip
+
+mac/Flex Projector.app/Contents/Resources/Java/FlexProjector.jar
+
+mac/FlexProjectorMac.zip
+
+FlexProjectorJar.zip

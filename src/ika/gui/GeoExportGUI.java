@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import org.jdesktop.swingworker.SwingWorker;
+import javax.swing.SwingWorker;
 
 /**
  * Utility class that handles the GUI for a GeoSetExporter.

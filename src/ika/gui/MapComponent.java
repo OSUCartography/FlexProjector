@@ -605,7 +605,7 @@ public class MapComponent extends javax.swing.JComponent
 
         // set default appearance of vector elements
         g2d.setStroke(new BasicStroke(1));
-        g2d.setColor(Color.black);
+        g2d.setColor(Color.BLACK);
 
         // draw the normal state of the objects
         root.drawNormalState(rp);
@@ -696,7 +696,7 @@ public class MapComponent extends javax.swing.JComponent
         g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
                 RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         g2d.setColor(java.awt.Color.GRAY);
-        g2d.setFont(new Font("SansSerif", Font.PLAIN, 22));
+        g2d.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 22));
         final Insets insets = getInsets();
         float centerX = (getWidth() - insets.left - insets.right) / 2f + insets.left;
         float centerY = (getHeight() - insets.top - insets.bottom) / 2f + insets.top;

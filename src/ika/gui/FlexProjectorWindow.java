@@ -6,10 +6,8 @@
 package ika.gui;
 
 import com.jhlabs.map.Ellipsoid;
-import com.jhlabs.map.MapMath;
 import com.jhlabs.map.proj.EquidistantCylindricalProjection;
 import com.jhlabs.map.proj.Projection;
-import com.sun.tools.javac.main.JavacOption;
 import ika.geo.*;
 import ika.geo.FlexProjectorModel.DisplayModel;
 import ika.geo.clipboard.GeoTransferable;
@@ -25,11 +23,14 @@ import ika.utils.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
@@ -1616,11 +1617,15 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
 
     private void onlineHelpMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onlineHelpMenuItemActionPerformed
 
-        Properties props
-                = ika.utils.PropertiesLoader.loadProperties("ika.app.Application.properties");
+        Properties props = PropertiesLoader.loadProperties("ika.app.Application.properties");
         String url = props.getProperty("HelpWebPage", "http://www.flexprojector.com/man/index.html");
-        BrowserLauncherWrapper.openURL(url);
-
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().browse(new URI(url));
+            } catch (Exception ex) {
+                Logger.getLogger(FlexProjectorWindow.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }//GEN-LAST:event_onlineHelpMenuItemActionPerformed
 
     private void curveDistanceToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_curveDistanceToggleButtonActionPerformed
@@ -1750,10 +1755,15 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_switchDisplayMenuItemActionPerformed
 
     private void webDownloadMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_webDownloadMenuItemActionPerformed
-        Properties props
-                = ika.utils.PropertiesLoader.loadProperties("ika.app.Application.properties");
+        Properties props = PropertiesLoader.loadProperties("ika.app.Application.properties");
         String url = props.getProperty("DataWebPage", "http://www.flexprojector.com/datadownload.html");
-        BrowserLauncherWrapper.openURL(url);
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().browse(new URI(url));
+            } catch (Exception ex) {
+                Logger.getLogger(FlexProjectorWindow.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }//GEN-LAST:event_webDownloadMenuItemActionPerformed
 
     private void exportMapMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportMapMenuItemActionPerformed
