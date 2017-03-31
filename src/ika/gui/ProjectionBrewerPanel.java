@@ -2017,8 +2017,6 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
 
         methodPanel.setLayout(new java.awt.CardLayout());
 
-        flexSlidersPanel.setLayout(new java.awt.GridLayout(1, 0));
-
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
         flexOptionsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ika/icons/Action.png"))); // NOI18N
