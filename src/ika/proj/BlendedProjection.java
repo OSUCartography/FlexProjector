@@ -45,7 +45,7 @@ public class BlendedProjection extends Projection {
         final double t = Math.abs(lat) / MapMath.HALFPI;
         final double w1 = curve.evaluate(t);
         if (w1 < 0 || w1 > 1) {
-            System.out.println(t + " " + w1);
+            System.err.println(t + " " + w1);
         }
 
         final double w2 = 1d - w1;

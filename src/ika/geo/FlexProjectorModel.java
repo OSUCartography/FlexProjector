@@ -91,7 +91,7 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
         /**
          * An array containing the information displayed by the distortion table.
          * Access to distParams must be synchronized as it is used by two threads.
-         * One thread is the Event Dispatching Thread, the other one is a Swingworker
+         * One thread is the Event Dispatching Thread, the other one is a SwingWorker
          * thread that fills the table with distortion indices.
          * Synchronization: synchronized (distParams) {...}
          * Using a Vector that is internally synchronized instead of an ArrayList is
@@ -125,8 +125,6 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
             for (ProjectionDistortionParameters p : distParams) {
                 Class c1 = p.getProjection().getClass();
                 Class c2 = proj.getClass();
-                System.out.println(c1); // FIXME
-                System.out.println(c2);
                 if (c1 == c2) {
                     return p;
                 }

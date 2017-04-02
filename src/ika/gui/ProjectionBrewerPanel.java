@@ -59,10 +59,9 @@ import javax.swing.text.NumberFormatter;
 public class ProjectionBrewerPanel extends javax.swing.JPanel {
 
     /**
-     * KEEP_ASPECT_CONSTANT_HACK
-     * A hack to force the aspect ratio to a constant value. Added for designing
-     * cylindrical projections with fixed aspect ratios.
-     * It will not work for non-cylindrical projections.
+     * KEEP_ASPECT_CONSTANT_HACK A hack to force the aspect ratio to a constant
+     * value. Added for designing cylindrical projections with fixed aspect
+     * ratios. It will not work for non-cylindrical projections.
      */
     private static final boolean KEEP_ASPECT_CONSTANT_HACK = false;
     private static final double SLIDER_SCALE = 1000d;
@@ -74,7 +73,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
     public static final int PEAKCURVE = 0;
     public static final int BELLCURVE = 1;
     public static final int LINEARCURVE = 2;
-    private static final int COMBO_BOX_WIDTH = 80;
+    private static final int COMBO_BOX_WIDTH = 120;
     /**
      * if true, projections are adjusted while sliders are dragged.
      */
@@ -100,7 +99,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
     /**
      * listeners that are informed whenever the design projection changes.
      */
-    private final Announcer<DesignProjectionChangeListener> designProjectionChangeListeners 
+    private final Announcer<DesignProjectionChangeListener> designProjectionChangeListeners
             = Announcer.to(DesignProjectionChangeListener.class);
 
     public interface DesignProjectionChangeListener extends EventListener {
@@ -110,7 +109,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form ProjectionBrewerPanel
-     */    
+     */
     public ProjectionBrewerPanel() {
         if (KEEP_ASPECT_CONSTANT_HACK) {
             SwingUtilities.invokeLater(new Runnable() {
@@ -120,7 +119,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
                 }
             });
         }
-        
+
         GUIUtil.getPreferredSize(new JPanel(), 100);
         initComponents();
 
@@ -206,8 +205,8 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         for (String proj : selProjs) {
             menuModel.addElement(proj);
         }
-        projectionComboBox.setModel(menuModel);
-        projectionComboBox.setSelectedItem("Kavraisky VII");
+        secondProjectionComboBox.setModel(menuModel);
+        secondProjectionComboBox.setSelectedItem("Kavraisky VII");
 
         // initialize the mixer GUI
         initMixerMenus();
@@ -453,7 +452,6 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         // These parameters are displayed in a table and are used for
         // distortion visualizations.
         // This is done in another thread to keep the GUI responsive.
-
         // FIXME concurrent access to foreProj, dist and qModel
         final Projection foreProj = model.getDesignProjection();
         asynchTableUpdater.execute(new Runnable() {
@@ -593,7 +591,6 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
             poleDirectionFormattedTextField.setEnabled(flexModel.isAdjustPoleDirection());
             poleDirectionFormattedTextField.setValue(flexModel.getMeridiansPoleDirection());
 
-
             // shape of meridians at the equator
             meridianAngularRadioButton.setSelected(!flexModel.isMeridiansSmoothAtEquator());
             meridianSmoothRadioButton.setSelected(flexModel.isMeridiansSmoothAtEquator());
@@ -645,7 +642,11 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
 
             // show or hide the second projection
             showSecondProjectionCheckBox.setSelected(displayModel.showSecondProjection);
-            projectionComboBox.setSelectedItem(displayModel.projection.getName());
+            if (displayModel.projection instanceof DesignProjection == false) { 
+                secondProjectionComboBox.setSelectedItem(displayModel.projection.getName());
+            } else {
+                secondProjectionComboBox.setSelectedIndex(0);
+            }
             switch (displayModel.secondProjectionAdjustment) {
                 case FlexProjectorModel.DisplayModel.ADJUST_NO:
                     adjustNoRadioButton.setSelected(true);
@@ -699,7 +700,6 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
             double minVal, double maxVal) {
 
         // don't return if centralDiff equals 0!
-
         // read the number of sliders that should move with the displaced slider
         final int reach = (Integer) (this.linkSpinner.getValue());
         if (reach == 0) {
@@ -884,7 +884,6 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         } finally {
             updatingGUI = false;
         }
-
 
         if (!slider.getValueIsAdjusting()) {
 
@@ -1308,7 +1307,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         graticuleLabel = new javax.swing.JLabel();
         graticuleComboBox = new javax.swing.JComboBox();
         showTissotCheckBox = new javax.swing.JCheckBox();
-        projectionComboBox = new javax.swing.JComboBox();
+        secondProjectionComboBox = new javax.swing.JComboBox();
         javax.swing.JLabel longitudeLabel = new javax.swing.JLabel();
         lon0Slider = new javax.swing.JSlider();
         adjustNoRadioButton = new javax.swing.JRadioButton();
@@ -2230,7 +2229,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         mixerMap1.setLayout(mixerMap1Layout);
         mixerMap1Layout.setHorizontalGroup(
             mixerMap1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 377, Short.MAX_VALUE)
+            .add(0, 821, Short.MAX_VALUE)
         );
         mixerMap1Layout.setVerticalGroup(
             mixerMap1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2273,7 +2272,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         mixerMap2.setLayout(mixerMap2Layout);
         mixerMap2Layout.setHorizontalGroup(
             mixerMap2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 377, Short.MAX_VALUE)
+            .add(0, 821, Short.MAX_VALUE)
         );
         mixerMap2Layout.setVerticalGroup(
             mixerMap2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2759,7 +2758,6 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
         displayPanel.add(showFlexCheckBox, gridBagConstraints);
 
-        tissotComboBox.setEditable(true);
         tissotComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "5", "10", "15", "30", "45", "90" }));
         tissotComboBox.setSelectedIndex(2);
         tissotComboBox.setToolTipText("The distance in degrees between two ellipses.");
@@ -2819,7 +2817,6 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
         displayPanel.add(graticuleLabel, gridBagConstraints);
 
-        graticuleComboBox.setEditable(true);
         graticuleComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "5", "10", "15", "30", "45", "90" }));
         graticuleComboBox.setToolTipText("The distance in degrees between two graticule lines.");
         graticuleComboBox.setMinimumSize(new java.awt.Dimension(50, 27));
@@ -2852,13 +2849,13 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
         displayPanel.add(showTissotCheckBox, gridBagConstraints);
 
-        projectionComboBox.setMaximumRowCount(25);
-        projectionComboBox.setToolTipText("Select the second projection for comparison.");
-        projectionComboBox.setMinimumSize(new java.awt.Dimension(150, 27));
-        projectionComboBox.setPreferredSize(GUIUtil.getPreferredSize(projectionComboBox, 250));
-        projectionComboBox.addItemListener(new java.awt.event.ItemListener() {
+        secondProjectionComboBox.setMaximumRowCount(25);
+        secondProjectionComboBox.setToolTipText("Select the second projection for comparison.");
+        secondProjectionComboBox.setMinimumSize(new java.awt.Dimension(150, 27));
+        secondProjectionComboBox.setPreferredSize(GUIUtil.getPreferredSize(secondProjectionComboBox, 250));
+        secondProjectionComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                projectionComboBoxItemStateChanged(evt);
+                secondProjectionComboBoxItemStateChanged(evt);
             }
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -2868,7 +2865,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(5, 25, 5, 0);
-        displayPanel.add(projectionComboBox, gridBagConstraints);
+        displayPanel.add(secondProjectionComboBox, gridBagConstraints);
 
         longitudeLabel.setText("Central Meridian");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -2995,7 +2992,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(20, 0, 3, 0);
         displayPanel.add(showAngularIsolinesCheckBox, gridBagConstraints);
 
-        angularIsolinesEquidistanceLabel.setText("Equidistance:");
+        angularIsolinesEquidistanceLabel.setText("Interval:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 22;
@@ -3038,7 +3035,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(18, 0, 3, 0);
         displayPanel.add(showArealIsolinesCheckBox, gridBagConstraints);
 
-        arealIsolinesEquidistanceLabel.setText("Equidistance:");
+        arealIsolinesEquidistanceLabel.setText("Interval:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 20;
@@ -3050,8 +3047,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         arealIsolinesEquidistanceComboBox.setEditable(true);
         arealIsolinesEquidistanceComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "0.1", "0.25", "0.5", "1", "2" }));
         arealIsolinesEquidistanceComboBox.setSelectedIndex(2);
-        arealIsolinesEquidistanceComboBox.setToolTipText("The equidistance between two isolines.");
-        arealIsolinesEquidistanceComboBox.setMinimumSize(new java.awt.Dimension(50, 27));
+        arealIsolinesEquidistanceComboBox.setToolTipText("The interval between two isolines.");
         arealIsolinesEquidistanceComboBox.setPreferredSize(GUIUtil.getPreferredSize(arealIsolinesEquidistanceComboBox, COMBO_BOX_WIDTH));
         arealIsolinesEquidistanceComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -3286,15 +3282,15 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_arealIsolinesEquidistanceComboBoxItemStateChanged
 
     private void showArealIsolinesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showArealIsolinesCheckBoxActionPerformed
-        model.getDisplayModel().showArealIsolines =
-                showArealIsolinesCheckBox.isSelected();
+        model.getDisplayModel().showArealIsolines
+                = showArealIsolinesCheckBox.isSelected();
         updateDistortionIndicesAndInformListeners();
         writeDisplayEnabledState();
     }//GEN-LAST:event_showArealIsolinesCheckBoxActionPerformed
 
     private void showAngularIsolinesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showAngularIsolinesCheckBoxActionPerformed
-        model.getDisplayModel().showAngularIsolines =
-                showAngularIsolinesCheckBox.isSelected();
+        model.getDisplayModel().showAngularIsolines
+                = showAngularIsolinesCheckBox.isSelected();
         updateDistortionIndicesAndInformListeners();
         writeDisplayEnabledState();
     }//GEN-LAST:event_showAngularIsolinesCheckBoxActionPerformed
@@ -3522,8 +3518,8 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         MapEventTrigger trigger = new MapEventTrigger(mapComponent.getGeoSet());
         try {
 
-            model.getDisplayModel().showFlexProjection =
-                    !model.getDisplayModel().showFlexProjection;
+            model.getDisplayModel().showFlexProjection
+                    = !model.getDisplayModel().showFlexProjection;
             writeDisplayGUI();
             updateDistortionProfilesManager();
             updateDistortionIndicesAndInformListeners();
@@ -3541,8 +3537,8 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         // don't trigger map event to avoid setting the dirty flag of the document
         MapEventTrigger trigger = new MapEventTrigger(mapComponent.getGeoSet());
         try {
-            model.getDisplayModel().showSecondProjection =
-                    !model.getDisplayModel().showSecondProjection;
+            model.getDisplayModel().showSecondProjection
+                    = !model.getDisplayModel().showSecondProjection;
             writeDisplayGUI();
             updateDistortionProfilesManager();
             updateDistortionIndicesAndInformListeners();
@@ -3727,12 +3723,14 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         if (projection == null) {
             // problem finding the projection, revert to the previous one.
             String previousName = model.getDisplayModel().projection.toString();
-            projectionComboBox.setSelectedItem(previousName);
+            secondProjectionComboBox.setSelectedItem(previousName);
             return;
         }
 
         model.getDisplayModel().projection = projection;
-        model.getDisplayModel().showSecondProjection = true;
+        if (updatingGUI == false) {
+            model.getDisplayModel().showSecondProjection = true;
+        }
 
         if (distortionProfilesManager != null) {
             distortionProfilesManager.setShowBackgroundProfiles(true);
@@ -3751,14 +3749,12 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         designProjectionChangeListeners.announce().designProjectionChanged(foreProj);
     }
 
-    private void projectionComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_projectionComboBoxItemStateChanged
-        if (evt.getStateChange() != java.awt.event.ItemEvent.SELECTED) {
-            return;
+    private void secondProjectionComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_secondProjectionComboBoxItemStateChanged
+        if (evt.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+            String name = (String) secondProjectionComboBox.getSelectedItem();
+            setBackgroundProjection(name);
         }
-
-        String name = (String) projectionComboBox.getSelectedItem();
-        setBackgroundProjection(name);
-    }//GEN-LAST:event_projectionComboBoxItemStateChanged
+    }//GEN-LAST:event_secondProjectionComboBoxItemStateChanged
 
     private void resetFlexProjection(String projName) throws IOException {
 
@@ -4639,7 +4635,6 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
     private javax.swing.JFormattedTextField poleDirectionFormattedTextField;
     private javax.swing.JSlider poleDirectionSlider;
     private javax.swing.JMenuItem polesAndEquatorMenuItem;
-    private javax.swing.JComboBox projectionComboBox;
     private javax.swing.JRadioButtonMenuItem quadraticBendingRadioButtonMenuItem;
     private javax.swing.JMenuItem removeBendingMenuItem;
     private javax.swing.JMenuItem removeDistanceMenuItem;
@@ -4658,6 +4653,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
     private javax.swing.JSlider scaleManualSlider;
     private javax.swing.JRadioButton scaleMinimumAreaDistRadioButton;
     private javax.swing.JRadioButton scalePointRadioButton;
+    private javax.swing.JComboBox secondProjectionComboBox;
     private javax.swing.JCheckBox showAcceptableAreaCheckBox;
     private javax.swing.JCheckBox showAngularIsolinesCheckBox;
     private javax.swing.JCheckBox showArealIsolinesCheckBox;

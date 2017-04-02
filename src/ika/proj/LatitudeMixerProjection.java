@@ -356,11 +356,11 @@ public class LatitudeMixerProjection extends AbstractMixerProjection {
         // overread "Projection 1"
         tokenizer.nextToken();
         String proj1Name = tokenizer.nextToken();
-        setProjection1(ProjectionFactory.getNamedPROJ4Projection(proj1Name));
+        setProjection1(ProjectionFactory.getNamedProjection(proj1Name));
         
         // overread "Projection 2"
         tokenizer.nextToken();
         String proj2Name = tokenizer.nextToken();
-        setProjection2(ProjectionFactory.getNamedPROJ4Projection(proj2Name));
+        setProjection2(ProjectionFactory.getNamedProjection(proj2Name));
     }
 }

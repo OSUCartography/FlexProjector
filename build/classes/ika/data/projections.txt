@@ -12,11 +12,12 @@ Eckert IV, true
 Eckert V, true
 Eckert VI, true
 Eckert-Greifendorff, true, approx
-Equidistant Cylindrical (Plate Carrée), true
+Equirectangular, true
 Fahey, true, approx
 Foucaut, true, 
 Foucaut Sinusoidal, true
 Gall (Gall Stereographic), true
+Gall-Peters, true
 Ginzburg VIII (TsNIIGAiK 1944), true
 Goode Homolosine, true
 Hammer, true, approx

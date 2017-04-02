@@ -188,11 +188,11 @@ public class MeanProjection extends AbstractMixerProjection {
         // overread "Projection 1"
         tokenizer.nextToken();
         String proj1Name = tokenizer.nextToken();
-        p1 = ProjectionFactory.getNamedPROJ4Projection(proj1Name);
+        p1 = ProjectionFactory.getNamedProjection(proj1Name);
 
         // overread "Projection 2"
         tokenizer.nextToken();
         String proj2Name = tokenizer.nextToken();
-        p2 = ProjectionFactory.getNamedPROJ4Projection(proj2Name);
+        p2 = ProjectionFactory.getNamedProjection(proj2Name);
     }
 }
