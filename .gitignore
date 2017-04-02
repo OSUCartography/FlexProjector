@@ -1,19 +1,9 @@
-*.DS_Store
-
 nbproject/private/
 build/
 dist/
-
 win/FlexProjector.exe
-
-win/FlexProjectorWin.zip
-
-mac/Flex Projector.app/Contents/Resources/Java/FlexProjector.jar
-
-mac/FlexProjectorMac.zip
-
+win/Flex Projector Windows.zip
+mac/Flex Projector.app/
+mac/Flex Projector macOS.zip
 FlexProjectorJar.zip
-
-dist/FlexProjector.jar
-
-
+*.DS_Store
