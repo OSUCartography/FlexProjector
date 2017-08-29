@@ -60,7 +60,7 @@ public class ProjectionFactors {
      */
     public void compute(Projection projection, double lam, double phi, double dh) {
         
-        double cosphi, t, n, r;
+        double cosphi, t;
         final double EPS = 1.0e-12;
         
         // check for latitude or longitude over-range
@@ -125,9 +125,7 @@ public class ProjectionFactors {
         this.h = Math.hypot(der.x_p, der.y_p);
         // k = sqrt(G)/cosphi = sqrt(dx/dlam*dx/dlam + dy/dlam*dy/dlam)/cosphi
         this.k = Math.hypot(der.x_l, der.y_l) / cosphi;
-        
-        r = 1.;
-        
+               
             /* FIXME
                 // convergence
                 if (!(fac->code & IS_ANAL_CONV)) {
@@ -138,7 +136,15 @@ public class ProjectionFactors {
              */
         
         // areal scale factor
-        this.s = (der.y_p * der.x_l - der.x_p * der.y_l) * r / cosphi; // this equals a*b
+        // Reference: Canters, Small-scale Map Projection Design
+        // equation 1.8 (p. 9) and equation 1.20 (page 11)
+        // First Gaussian fundamental quantities with Equation 1.8: EE, FF, GG 
+        // then compute areal scale factor with equation 1.20
+        // s = sqrt(EE*GG-FF*FF)/(R*R*cos(phi)
+        // Here, R = 1.
+        // This can be simplified to the single line of code below.
+        // Thanks to Bojan Savric for his help with this!
+        this.s = Math.abs(der.x_p * der.y_l - der.y_p * der.x_l) / cosphi; 
         
         // meridian-parallel angle theta prime
         this.thetap = Math.asin(s / (h * k));

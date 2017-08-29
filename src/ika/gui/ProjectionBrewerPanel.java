@@ -2883,7 +2883,7 @@ public class ProjectionBrewerPanel extends javax.swing.JPanel {
         lon0Slider.setPaintTicks(true);
         lon0Slider.setToolTipText("Adjust the central meridian of the projection.");
         lon0Slider.setValue(0);
-        lon0Slider.setMinimumSize(new java.awt.Dimension(200, 29));
+        lon0Slider.setMinimumSize(GUIUtil.getPreferredSize(lon0Slider, 200));
         lon0Slider.setPreferredSize(GUIUtil.getPreferredSize(lon0Slider, 200));
         lon0Slider.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
