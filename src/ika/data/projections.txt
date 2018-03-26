@@ -20,6 +20,7 @@ Gall (Gall Stereographic), true
 Gall-Peters, true
 Ginzburg VIII (TsNIIGAiK 1944), true
 Goode Homolosine, true
+Equal Earth, true
 Hammer, true, approx
 Hölzel, true, approx
 Kavrayskiy I, true
@@ -46,6 +47,7 @@ van der Grinten (I), true, approx
 Wagner I, true
 Wagner II, true
 Wagner III, true
+Wagner IV, true
 Wagner VI, true
 Wagner VII, true, approx
 Winkel I, true

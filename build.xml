@@ -79,8 +79,8 @@
                           identifier="${main.class}"
                           mainclassname="${main.class}"
                           icon="mac/icon.icns"
-                          shortversion="1.0.6"
-                          copyright="© Bernhard Jenny 2007–2017"
+                          shortversion="1.0.7"
+                          copyright="© Bernhard Jenny 2007–2018"
                           applicationCategory="public.app-category.graphics-design">
             <classpath file="${dist.jar}" />
             <option value="-Dapple.laf.useScreenMenuBar=true"/>

@@ -13,54 +13,57 @@ import ika.map.tools.*;
 import ika.utils.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JMenuItem;
 
 /**
  * An interactive JComponent for drawing and working with map data.<br>
  * This MapComponent contains a GeoSet that is used for all manipulations.
- * @beaninfo
- *      attribute: isContainer false
+ *
+ * @beaninfo attribute: isContainer false
  * @author Bernhard Jenny, Institute of Cartography, ETH Zurich.
  */
 public class MapComponent extends javax.swing.JComponent
         implements MapEventListener {
 
     /**
-     * The root contains the backgroundGeoSet, the mainGeoSet and the 
+     * The root contains the backgroundGeoSet, the mainGeoSet and the
      * foregroundGeoSet in this order. It is a wrapper containing all GeoObjects
      * of the map. It is not accessible from other classes.
      */
     private GeoTreeRoot root = null;
     /**
-     * The current scale to display the GeoSet. Maps between world coordinates of
-     * the GeoObjects and the internal coordinate space of this MapComponent.
+     * The current scale to display the GeoSet. Maps between world coordinates
+     * of the GeoObjects and the internal coordinate space of this MapComponent.
      */
     private double scale = 1.;
     /**
-     * The amount by which the scale factor changes on a simple zoom-in or zoom-out
-     * command without specifying the exact new scale factor.
+     * The amount by which the scale factor changes on a simple zoom-in or
+     * zoom-out command without specifying the exact new scale factor.
      */
     private static final double ZOOM_STEP = 1. / 3.;
     private static final double MIN_SCALE = 0.0000001;
     /**
      * The MapEventHandler is responsible for treating all key and mouse events
-     * for this MapComponent. The whole functionality of MapEventHandler could 
-     * have been integrated into MapComponent. By separting the two, the 
+     * for this MapComponent. The whole functionality of MapEventHandler could
+     * have been integrated into MapComponent. By separting the two, the
      * MapComponent is much easier to understand, program and extend.
      */
     private MapEventHandler mapEventHandler = null;
     /**
      * A BufferedImage that is used as double buffer for drawing. Swing is using
-     * its own double buffer mechanism. However, with this private double buffer,
-     * MapTools that need quick drawing don't have to wait until the complete 
-     * map is redrawn, but can just draw this doubleBuffer, and then draw their 
-     * own stuff.
+     * its own double buffer mechanism. However, with this private double
+     * buffer, MapTools that need quick drawing don't have to wait until the
+     * complete map is redrawn, but can just draw this doubleBuffer, and then
+     * draw their own stuff.
      */
     private BufferedImage doubleBuffer = null;
     /**
-     * Keep track of the top left coordinate of the visible area in world coordinates.
+     * Keep track of the top left coordinate of the visible area in world
+     * coordinates.
      */
-    private Point2D.Double topLeft = new Point2D.Double(0, 1000);
+    private final Point2D.Double topLeft = new Point2D.Double(0, 1000);
     /**
      * Rendering settings for all raster images in this map.
      */
@@ -68,44 +71,45 @@ public class MapComponent extends javax.swing.JComponent
     /**
      * A formatter that can be used to display coordinates of this map.
      */
-    private CoordinateFormatter coordinateFormatter =
-            new CoordinateFormatter("###,##0.00", "###,##0", 1);
+    private CoordinateFormatter coordinateFormatter
+            = new CoordinateFormatter("###,##0.00", "###,##0", 1);
     /**
      * MapDropTarget is a helper object that handles drag and drop of data on
      * this component.
      */
     private MapDropTarget mapDropTarget;
     /**
-     * infoString is drawn in this component when no visible 
-     * GeoObject is present.
+     * infoString is drawn in this component when no visible GeoObject is
+     * present.
      */
     private String infoString = "Drag your map data here.";
     private RenderParamsProvider renderParamsProvider;
     /**
      * Event handlers that are called when the scale changes.
      */
-    private ArrayList scaleChangeHandlers = new ArrayList(1);
+    private final ArrayList scaleChangeHandlers = new ArrayList(1);
     /**
      * Chain of Undo/Redo data snapshots for this map.
      */
-    private Undo undo = new Undo();
+    private final Undo undo = new Undo();
     /**
      * MapUndoManager is responsible for applying and providing undo/redo data
-     * snapshots. Can be null, in which case the child data of GeoTreeRoot
-     * is serialized and deserialized.
-     * See undo() and redo() of this class.
+     * snapshots. Can be null, in which case the child data of GeoTreeRoot is
+     * serialized and deserialized. See undo() and redo() of this class.
      */
     private MapUndoManager mapUndoManager = null;
     /**
      * An affine transformation that is applied to selected objects when drawing
      * them. This allows MapTools to interactively edit the selected objects
      * without the need to copy them and transform their geoemetry. Usually,
-     * transformForSelectedObjects  is null, which means that no transformation
-     * has to be applied on selected objects. 
+     * transformForSelectedObjects is null, which means that no transformation
+     * has to be applied on selected objects.
      */
     private AffineTransform transformForSelectedObjects = null;
 
-    /** Creates a new instance of MapComponent */
+    /**
+     * Creates a new instance of MapComponent
+     */
     public MapComponent() {
 
         this.root = new GeoTreeRoot();
@@ -121,8 +125,9 @@ public class MapComponent extends javax.swing.JComponent
     /**
      * Adds a GeoObject to the map. Deselects all previously selected GeoObjects
      * if deselectExisting is true.
+     *
      * @param geoObject A GeoObject that will be added to the map.
-     * @param deselectExisting If true, all GeoObjects previously contained in 
+     * @param deselectExisting If true, all GeoObjects previously contained in
      * this GeoSet are deselected before the passed GeoObject is attached.
      */
     public void addGeoObject(GeoObject geoObject, boolean deselectExisting) {
@@ -143,8 +148,8 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Removes all objects from the mainGeoSet. Also removes GeoObjects that 
-     * are not currently selected, or are not selectable at all.
+     * Removes all objects from the mainGeoSet. Also removes GeoObjects that are
+     * not currently selected, or are not selectable at all.
      */
     public void removeAllGeoObjects() {
         this.root.getMainGeoSet().removeAllGeoObjects();
@@ -218,6 +223,7 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Centers the map display on the passed point.
+     *
      * @param center The new center of the visible area in world coordinates.
      */
     public void centerOnPoint(Point2D.Double center) {
@@ -226,6 +232,7 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Centers the map display on the passed point.
+     *
      * @param cx The new center of the visible area in world coordinates.
      * @param cy The new center of the visible area in world coordinates.
      */
@@ -237,7 +244,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Shifts the currently displayed area of the map in horizontal and vertical direction.
+     * Shifts the currently displayed area of the map in horizontal and vertical
+     * direction.
+     *
      * @param dx Offset in horizontal direction in world coordinates.
      * @param dy Offset in vertical direction in world coordinates.
      */
@@ -248,7 +257,8 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Zooms into the map. The currently visible center of the map is maintained.
+     * Zooms into the map. The currently visible center of the map is
+     * maintained.
      */
     public void zoomIn() {
         zoom(1. + ZOOM_STEP);
@@ -256,10 +266,11 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Zooms into the map, and centers on the passed point.
-     ** @param center The new center of the visible area in world coordinates.
+     *
+     ** @param fixPos position in world coordinates that should not move
      */
-    public void zoomIn(Point2D.Double center) {
-        zoomOnPoint(1. + ZOOM_STEP, center);
+    public void zoomIn(Point2D.Double fixPos) {
+        zoomOnPoint(1. + ZOOM_STEP, fixPos);
     }
 
     /**
@@ -271,14 +282,16 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Zooms out and centers the visible area on the passed point.
-     * @param center The new center of the visible area in world coordinates.
+     *
+     ** @param fixPos position in world coordinates that should not move
      */
-    public void zoomOut(Point2D.Double center) {
-        zoomOnPoint(1. / (1. + ZOOM_STEP), center);
+    public void zoomOut(Point2D.Double fixPos) {
+        zoomOnPoint(1. / (1. + ZOOM_STEP), fixPos);
     }
 
     /**
      * Zooms out and centers the visible area on the passed point.
+     *
      * @param zoomFactor The new zoom factor.
      */
     public void zoom(double zoomFactor) {
@@ -286,21 +299,25 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Changes the current scale by a specified factor and centers the currently visible
-     * area on a passed point.
+     * Changes the current scale by a specified factor and centers the currently
+     * visible area on a passed point.
+     *
      * @param zoomFactor The new zoom factor.
-     * @param pt The new center of the visible area in world coordinates.
+     * @param fixPos position in world coordinates that should not move.
      */
-    public void zoomOnPoint(double zoomFactor, Point2D.Double pt) {
-        setScaleFactor(scale * zoomFactor);
-        topLeft.x = pt.x - getVisibleWidth() / 2;
-        topLeft.y = pt.y + getVisibleHeight() / 2;
+    private void zoomOnPoint(double zoomFactor, Point2D.Double fixPos) {
+        double dx = (fixPos.x - topLeft.x) / zoomFactor;
+        double dy = (fixPos.y - topLeft.y) / zoomFactor;
+        topLeft.x = fixPos.x - dx;
+        topLeft.y = fixPos.y - dy;
+        this.scale *= zoomFactor;
         repaint();
     }
 
     /**
      * Zooms on passed rectangle. Makes sure the area contained in the rectangle
      * becomes entirely visible.
+     *
      * @param rect The area that will be at least visible.
      */
     public void zoomOnRectangle(Rectangle2D rect) {
@@ -316,8 +333,8 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Changes the scale factor and the center of the currently visible area
-     * so that all visible GeoObjects contained in the map will be shown.
+     * Changes the scale factor and the center of the currently visible area so
+     * that all visible GeoObjects contained in the map will be shown.
      */
     public void showAll() {
 
@@ -352,8 +369,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Returns the current scale factor used to display the map.
-     * This is the scale factor between screen pixels and ground units.
+     * Returns the current scale factor used to display the map. This is the
+     * scale factor between screen pixels and ground units.
+     *
      * @return The current scale factor.
      */
     public double getScaleFactor() {
@@ -361,8 +379,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Returns the current scale used to display the map. If the map is displayed
-     * at 1:10,000, the returned value is 10,000.
+     * Returns the current scale used to display the map. If the map is
+     * displayed at 1:10,000, the returned value is 10,000.
+     *
      * @return The current scale.
      */
     public double getScaleNumber() {
@@ -380,6 +399,7 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Changes the scale factor used to display the map.
+     *
      * @param scale The new scale factor.
      */
     public void setScaleFactor(double scale) {
@@ -408,8 +428,10 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Returns whether a GeoObject is currently completely visible in the map.
+     *
      * @param geoObject The GeoObject to test.
-     * @return true if the passed GeoObject is entirely visible in the map, false otherwise.
+     * @return true if the passed GeoObject is entirely visible in the map,
+     * false otherwise.
      */
     public boolean isObjectVisibleOnMap(GeoObject geoObject, boolean partial) {
         if (geoObject == null) {
@@ -430,8 +452,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Returns whether currently all GeoObjects contained in the map are displayed in
-     * the map.
+     * Returns whether currently all GeoObjects contained in the map are
+     * displayed in the map.
+     *
      * @return True if all GeoObjects of the map are currently visible.
      */
     public boolean isAllVisible() {
@@ -441,8 +464,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Returns the extension of the visible area in world coordinates (the coordinate
-     * system used by the GeoObjects).
+     * Returns the extension of the visible area in world coordinates (the
+     * coordinate system used by the GeoObjects).
+     *
      * @return The currently visible area in world coordinates.
      */
     public Rectangle2D getVisibleArea() {
@@ -452,8 +476,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Returns the width of the currently visible area in world coordinates (the coordinate
-     * system used by the GeoObjects).
+     * Returns the width of the currently visible area in world coordinates (the
+     * coordinate system used by the GeoObjects).
+     *
      * @return The width of the currently visible area in world coordinates.
      */
     public double getVisibleWidth() {
@@ -463,8 +488,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Returns the height of the currently visible area in world coordinates (the coordinate
-     * system used by the GeoObjects).
+     * Returns the height of the currently visible area in world coordinates
+     * (the coordinate system used by the GeoObjects).
+     *
      * @return The height of the currently visible area in world coordinates.
      */
     public double getVisibleHeight() {
@@ -475,6 +501,7 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Returns the GeoSet that is currently used.
+     *
      * @return The GeoSet that is used. Can be null!
      */
     public GeoSet getGeoSet() {
@@ -484,6 +511,7 @@ public class MapComponent extends javax.swing.JComponent
     /**
      * Returns a GeoSet that can be used by importers to add GeoObjects to the
      * map, and by exporters to write the map to some external file format.
+     *
      * @return A GeoSet to store imported data or extract data to export.
      */
     public GeoSet getImportExportGeoSet() {
@@ -492,7 +520,7 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Returns the GeoSet that contains data that is displayed above all other
-     * data. The foreground GeoSet is not exported and is usually only used 
+     * data. The foreground GeoSet is not exported and is usually only used
      * temporarily.
      */
     public GeoSet getForegroundGeoSet() {
@@ -500,20 +528,22 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Set the GeoSet that is displayed.
-     * Objects derived from GeoSet can be passed here, which gives applications
-     * a chance to do custom computations e.g. for drawing and storing their
-     * data in a private model that is derived from GeoSet.
+     * Set the GeoSet that is displayed. Objects derived from GeoSet can be
+     * passed here, which gives applications a chance to do custom computations
+     * e.g. for drawing and storing their data in a private model that is
+     * derived from GeoSet.
      */
     public void setGeoSet(GeoSet geoSet) {
         this.root.setMainGeoSet(geoSet);
     }
 
     /**
-     * Returns the visually top-most object contained in this GeoSet that is under
-     * a passed point.
+     * Returns the visually top-most object contained in this GeoSet that is
+     * under a passed point.
+     *
      * @param point The point for hit detection.
-     * @param pixelTolDist The tolerance to use for hit detection in pixel coordinates.
+     * @param pixelTolDist The tolerance to use for hit detection in pixel
+     * coordinates.
      * @return Returns the GeoObject if any, null otherwise.
      */
     public synchronized GeoObject getObjectAtPosition(Point2D point,
@@ -526,8 +556,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Converts from the coordinate system of this MapComponent to the world coordinate
-     * system used by the GeoObjects.
+     * Converts from the coordinate system of this MapComponent to the world
+     * coordinate system used by the GeoObjects.
+     *
      * @param pt The point to convert. Will not be changed.
      * @return The convert point in world coordinates.
      */
@@ -543,6 +574,7 @@ public class MapComponent extends javax.swing.JComponent
     /**
      * Converts from the world coordinate system used by the GeoObjects to the
      * coordinate system of this MapComponent.
+     *
      * @param pt The point to convert. The converted coordinates will also be
      * stored in pt.
      */
@@ -585,6 +617,7 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Draw the non-selected map objects.
+     *
      * @param g2d The destination for drawing.
      * @rp The rendering parameters.
      */
@@ -602,7 +635,6 @@ public class MapComponent extends javax.swing.JComponent
         g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                 RenderingHints.VALUE_STROKE_PURE);
 
-
         // set default appearance of vector elements
         g2d.setStroke(new BasicStroke(1));
         g2d.setColor(Color.BLACK);
@@ -614,6 +646,7 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Draw the selected map objects.
+     *
      * @param g2d The destination for drawing.
      * @rp The rendering parameters.
      */
@@ -645,8 +678,9 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Paints this map into a Graphics2D.
-     * @param g2d The drawing destination. May be associated with a buffered image
-     * or a component. If associated with a component, the insets must be 
+     *
+     * @param g2d The drawing destination. May be associated with a buffered
+     * image or a component. If associated with a component, the insets must be
      * compensated for.
      * @param onlyDrawSelected If true, only selected GeoObjects will be drawn.
      */
@@ -659,8 +693,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Utility method that returns the bounding box of the area that needs to 
-     * be redrawn.
+     * Utility method that returns the bounding box of the area that needs to be
+     * redrawn.
+     *
      * @param g The graphics object that needs to be redrawn.
      * @return The bounding box of the area that must be redrawn.
      */
@@ -673,8 +708,9 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Returns the internal Double Buffer used for drawing the map. This is useful for
-     * MapTools that temporarily draw over the map.
+     * Returns the internal Double Buffer used for drawing the map. This is
+     * useful for MapTools that temporarily draw over the map.
+     *
      * @return A reference to the double buffer with the content remaining from
      * the last repaint.
      */
@@ -707,11 +743,11 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Override paintComponent of JComponent for custom drawing.
+     *
      * @param g The destination to draw to.
      */
     @Override
     protected void paintComponent(Graphics g) {
-
 
         //ika.utils.NanoTimer timer = new ika.utils.NanoTimer();
         // final long startTime = timer.nanoTime();
@@ -803,8 +839,10 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Inform Swing that this JComponent is opaque, i.e. we are drawing the 
-     * whole area of this Component. This accelerates the drawing of the component.
+     * Inform Swing that this JComponent is opaque, i.e. we are drawing the
+     * whole area of this Component. This accelerates the drawing of the
+     * component.
+     *
      * @return true if opaque.
      */
     @Override
@@ -821,14 +859,17 @@ public class MapComponent extends javax.swing.JComponent
      * A callback method for the MapEventListener interface. This informs this
      * MapComponent that its data has changed. Redraw the map to reflect the
      * changes.
+     *
      * @param evt The event discribing what type of change happened.
      */
+    @Override
     public void mapEvent(MapEvent evt) {
         this.repaint();
     }
 
     /**
      * Returns the current MapTool
+     *
      * @return The currently active MapTool.
      */
     public MapTool getMapTool() {
@@ -837,6 +878,7 @@ public class MapComponent extends javax.swing.JComponent
 
     /**
      * Sets the current MapTool.
+     *
      * @param mapTool The new MapTool
      */
     public void setMapTool(MapTool mapTool) {
@@ -928,10 +970,11 @@ public class MapComponent extends javax.swing.JComponent
         final double scaleNumber = getScaleNumber();
         ika.utils.SwingThreadUtils.invokeAndWait(new Runnable() {
 
+            @Override
             public void run() {
                 for (int i = scaleChangeHandlers.size() - 1; i >= 0; i--) {
-                    ScaleChangeHandler h =
-                            (ScaleChangeHandler) scaleChangeHandlers.get(i);
+                    ScaleChangeHandler h
+                            = (ScaleChangeHandler) scaleChangeHandlers.get(i);
                     h.scaleChanged(mapComponent, scaleFactor, scaleNumber);
                 }
             }
@@ -941,6 +984,7 @@ public class MapComponent extends javax.swing.JComponent
     /**
      * Register the undo and redo menu item that will be automatically enabled
      * or disabled depending on whether undoing or redoing is possible.
+     *
      * @param undoMenuItem The undo menu item, usually with control-z.
      * @param redoMenuItem The redo menu item.
      */
@@ -949,15 +993,16 @@ public class MapComponent extends javax.swing.JComponent
     }
 
     /**
-     * Take a data snapshot and store it in the Undo manager. Call
-     * addUndo after changing the mainGeoSet.
+     * Take a data snapshot and store it in the Undo manager. Call addUndo after
+     * changing the mainGeoSet.
+     *
      * @param name The name of the action that can be undone later.
      */
     public void addUndo(String name) {
         try {
             undo.add(name, getUndoRedoState());
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.getLogger(MapComponent.class.getName()).log(Level.SEVERE, null, e);
         }
     }
 
@@ -968,12 +1013,13 @@ public class MapComponent extends javax.swing.JComponent
         try {
             undo.reset(getUndoRedoState());
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.getLogger(MapComponent.class.getName()).log(Level.SEVERE, null, e);
         }
     }
 
     /**
-     * Undo the last registered action. This reverts to the last stored data snapshot.
+     * Undo the last registered action. This reverts to the last stored data
+     * snapshot.
      */
     public void undo() throws IOException, ClassNotFoundException {
         applyUndoRedoState(undo.getUndo());
@@ -1036,7 +1082,7 @@ public class MapComponent extends javax.swing.JComponent
     public void setMapUndoManager(MapUndoManager mapUndoManager) {
         this.mapUndoManager = mapUndoManager;
     }
-    
+
     /**
      * @return the zoomWithMouseWheel
      */
