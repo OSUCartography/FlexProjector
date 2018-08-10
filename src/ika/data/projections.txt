@@ -12,6 +12,7 @@ Eckert IV, true
 Eckert V, true
 Eckert VI, true
 Eckert-Greifendorff, true, approx
+Equal Earth, true
 Equirectangular, true
 Fahey, true, approx
 Foucaut, true, 
@@ -20,7 +21,6 @@ Gall (Gall Stereographic), true
 Gall-Peters, true
 Ginzburg VIII (TsNIIGAiK 1944), true
 Goode Homolosine, true
-Equal Earth, true
 Hammer, true, approx
 Hölzel, true, approx
 Kavrayskiy I, true
@@ -43,6 +43,7 @@ Putnins P5', true
 Quartic Authalic, true
 Robinson, true
 Sinusoidal, true
+Tobler-Mercator, true
 van der Grinten (I), true, approx
 Wagner I, true
 Wagner II, true

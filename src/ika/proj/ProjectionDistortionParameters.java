@@ -286,6 +286,14 @@ public class ProjectionDistortionParameters {
             Danc = Math.toDegrees(Danc / continentalArea);
             Darc = Darc / continentalArea;
             Dabc = Dabc / continentalArea;
+            
+            if (normalAspectProj.isEqualArea()) {
+                Dar = Darc = 0;
+            }
+            if (normalAspectProj.isConformal()) {
+                Dan = Danc = 0;
+            }
+            
         } catch (Exception e) {
             Dan = Double.NaN;
             Dar = Double.NaN;

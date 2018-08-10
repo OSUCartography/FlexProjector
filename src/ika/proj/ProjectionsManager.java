@@ -200,8 +200,7 @@ public class ProjectionsManager {
     /**
      * Returns a list of selected projection names with an optional string appended
      * that indicates whether a flex projection will only approximate the 
-     * projections. Does not include the Mercator projection. The first entry
-     * is for loading an external flex file.
+     * projections. The first entry is for loading an external flex file.
      * @param labelApproximated If true approximated projections are labeled.
      * @param onlyCylindrical If true only cylindrical projections are included.
      * @param includeExternalFlexProjectorFile If true an option is added for 
@@ -235,10 +234,6 @@ public class ProjectionsManager {
         }
 
         Collections.sort(selectedProjs);
-
-        // remove Mercator projection which has the poles at infinity and
-        // hence cannot be approximated.
-        selectedProjs.remove("Mercator");
 
         // first entry is for external Flex Projection files.
         if (includeExternalFlexProjectorFile) {
