@@ -1876,7 +1876,6 @@ minimizeMenuItem.addActionListener(new java.awt.event.ActionListener() {
 
         // display dialog
         JComboBox jcb = new JComboBox(projNames.toArray());
-        jcb.setMaximumRowCount(projNames.size());
         // custom renderer for separator in menu
         jcb.setRenderer(new BasicComboBoxRenderer() {
             @Override
