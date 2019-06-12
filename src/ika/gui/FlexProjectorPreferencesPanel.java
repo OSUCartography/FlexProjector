@@ -255,42 +255,42 @@ public class FlexProjectorPreferencesPanel extends JPanel
 
         jLabel6.setText("<html>Select the projections that will appear in <br>the distortion table, and will be available <br>for display in the map background and for <br>resetting the current projection.</html>");
 
-        org.jdesktop.layout.GroupLayout projectionsPanelLayout = new org.jdesktop.layout.GroupLayout(projectionsPanel);
+        javax.swing.GroupLayout projectionsPanelLayout = new javax.swing.GroupLayout(projectionsPanel);
         projectionsPanel.setLayout(projectionsPanelLayout);
         projectionsPanelLayout.setHorizontalGroup(
-            projectionsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(projectionsPanelLayout.createSequentialGroup()
+            projectionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(projectionsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(projectionsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(projectionsPanelLayout.createSequentialGroup()
-                        .add(jLabel5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 396, Short.MAX_VALUE)
-                        .add(32, 32, 32))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, projectionsPanelLayout.createSequentialGroup()
-                        .add(projectionsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, projectionsPanelLayout.createSequentialGroup()
-                                .add(selectAllProjectionsButton)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(selectNoProjectionButton)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 104, Short.MAX_VALUE)
-                                .add(selectDefaultProjectionsButton))
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE)
-                            .add(projectionsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE))
+                .addGroup(projectionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(projectionsPanelLayout.createSequentialGroup()
+                        .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, 396, Short.MAX_VALUE)
+                        .addGap(32, 32, 32))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, projectionsPanelLayout.createSequentialGroup()
+                        .addGroup(projectionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, projectionsPanelLayout.createSequentialGroup()
+                                .addComponent(selectAllProjectionsButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(selectNoProjectionButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 92, Short.MAX_VALUE)
+                                .addComponent(selectDefaultProjectionsButton))
+                            .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE)
+                            .addComponent(projectionsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE))
                         .addContainerGap())))
         );
         projectionsPanelLayout.setVerticalGroup(
-            projectionsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, projectionsPanelLayout.createSequentialGroup()
+            projectionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, projectionsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 79, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(projectionsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(projectionsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(selectAllProjectionsButton)
-                    .add(selectNoProjectionButton)
-                    .add(selectDefaultProjectionsButton))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jLabel5)
+                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(projectionsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(projectionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(selectAllProjectionsButton)
+                    .addComponent(selectNoProjectionButton)
+                    .addComponent(selectDefaultProjectionsButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -300,9 +300,6 @@ public class FlexProjectorPreferencesPanel extends JPanel
         colorPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 5, 20));
 
         innerColorPanel.setLayout(new java.awt.GridBagLayout());
-
-        flexColorButton.setMaximumSize(new java.awt.Dimension(32, 32));
-        flexColorButton.setPreferredSize(new java.awt.Dimension(32, 32));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
@@ -310,8 +307,6 @@ public class FlexProjectorPreferencesPanel extends JPanel
         innerColorPanel.add(flexColorButton, gridBagConstraints);
 
         secondColorButton.setForeground(new java.awt.Color(102, 102, 102));
-        secondColorButton.setMaximumSize(new java.awt.Dimension(32, 32));
-        secondColorButton.setPreferredSize(new java.awt.Dimension(32, 32));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -319,8 +314,6 @@ public class FlexProjectorPreferencesPanel extends JPanel
         innerColorPanel.add(secondColorButton, gridBagConstraints);
 
         arealIsolinesColorButton.setForeground(new java.awt.Color(102, 102, 102));
-        arealIsolinesColorButton.setMaximumSize(new java.awt.Dimension(32, 32));
-        arealIsolinesColorButton.setPreferredSize(new java.awt.Dimension(32, 32));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
@@ -328,8 +321,6 @@ public class FlexProjectorPreferencesPanel extends JPanel
         innerColorPanel.add(arealIsolinesColorButton, gridBagConstraints);
 
         angularIsolinesColorButton.setForeground(new java.awt.Color(102, 102, 102));
-        angularIsolinesColorButton.setMaximumSize(new java.awt.Dimension(32, 32));
-        angularIsolinesColorButton.setPreferredSize(new java.awt.Dimension(32, 32));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
@@ -369,8 +360,6 @@ public class FlexProjectorPreferencesPanel extends JPanel
         innerColorPanel.add(jLabel3, gridBagConstraints);
 
         mapBackgroundColorButton.setForeground(new java.awt.Color(102, 102, 102));
-        mapBackgroundColorButton.setMaximumSize(new java.awt.Dimension(32, 32));
-        mapBackgroundColorButton.setPreferredSize(new java.awt.Dimension(32, 32));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 6;

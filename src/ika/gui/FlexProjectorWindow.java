@@ -741,20 +741,20 @@ public class FlexProjectorWindow extends MainWindow
         jTextArea1.setWrapStyleWord(true);
         jScrollPane1.setViewportView(jTextArea1);
 
-        org.jdesktop.layout.GroupLayout distortionInfoPanelLayout = new org.jdesktop.layout.GroupLayout(distortionInfoPanel);
+        javax.swing.GroupLayout distortionInfoPanelLayout = new javax.swing.GroupLayout(distortionInfoPanel);
         distortionInfoPanel.setLayout(distortionInfoPanelLayout);
         distortionInfoPanelLayout.setHorizontalGroup(
-            distortionInfoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(distortionInfoPanelLayout.createSequentialGroup()
+            distortionInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(distortionInfoPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 508, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 508, Short.MAX_VALUE)
                 .addContainerGap())
         );
         distortionInfoPanelLayout.setVerticalGroup(
-            distortionInfoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(distortionInfoPanelLayout.createSequentialGroup()
+            distortionInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(distortionInfoPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -868,15 +868,15 @@ public class FlexProjectorWindow extends MainWindow
 
         coordinatesInfoPanel.setToolTipText("Coordinates of the current mouse position and scale of the map.");
 
-        org.jdesktop.layout.GroupLayout coordinatesInfoPanelLayout = new org.jdesktop.layout.GroupLayout(coordinatesInfoPanel);
+        javax.swing.GroupLayout coordinatesInfoPanelLayout = new javax.swing.GroupLayout(coordinatesInfoPanel);
         coordinatesInfoPanel.setLayout(coordinatesInfoPanelLayout);
         coordinatesInfoPanelLayout.setHorizontalGroup(
-            coordinatesInfoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 410, Short.MAX_VALUE)
+            coordinatesInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 410, Short.MAX_VALUE)
         );
         coordinatesInfoPanelLayout.setVerticalGroup(
-            coordinatesInfoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 26, Short.MAX_VALUE)
+            coordinatesInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 26, Short.MAX_VALUE)
         );
 
         navigationToolBar.add(coordinatesInfoPanel);
@@ -926,15 +926,15 @@ public class FlexProjectorWindow extends MainWindow
             }
         });
 
-        org.jdesktop.layout.GroupLayout vertProfilesMapLayout = new org.jdesktop.layout.GroupLayout(vertProfilesMap);
+        javax.swing.GroupLayout vertProfilesMapLayout = new javax.swing.GroupLayout(vertProfilesMap);
         vertProfilesMap.setLayout(vertProfilesMapLayout);
         vertProfilesMapLayout.setHorizontalGroup(
-            vertProfilesMapLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 538, Short.MAX_VALUE)
+            vertProfilesMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 538, Short.MAX_VALUE)
         );
         vertProfilesMapLayout.setVerticalGroup(
-            vertProfilesMapLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 214, Short.MAX_VALUE)
+            vertProfilesMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 214, Short.MAX_VALUE)
         );
 
         leftProfilePanel.add(vertProfilesMap, java.awt.BorderLayout.CENTER);
@@ -987,15 +987,15 @@ public class FlexProjectorWindow extends MainWindow
             }
         });
 
-        org.jdesktop.layout.GroupLayout horProfilesMapLayout = new org.jdesktop.layout.GroupLayout(horProfilesMap);
+        javax.swing.GroupLayout horProfilesMapLayout = new javax.swing.GroupLayout(horProfilesMap);
         horProfilesMap.setLayout(horProfilesMapLayout);
         horProfilesMapLayout.setHorizontalGroup(
-            horProfilesMapLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 484, Short.MAX_VALUE)
+            horProfilesMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 484, Short.MAX_VALUE)
         );
         horProfilesMapLayout.setVerticalGroup(
-            horProfilesMapLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 278, Short.MAX_VALUE)
+            horProfilesMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 278, Short.MAX_VALUE)
         );
 
         rightProfilePanel.add(horProfilesMap, java.awt.BorderLayout.CENTER);
@@ -1058,15 +1058,15 @@ public class FlexProjectorWindow extends MainWindow
             }
         });
 
-        org.jdesktop.layout.GroupLayout curvesMapLayout = new org.jdesktop.layout.GroupLayout(curvesMap);
+        javax.swing.GroupLayout curvesMapLayout = new javax.swing.GroupLayout(curvesMap);
         curvesMap.setLayout(curvesMapLayout);
         curvesMapLayout.setHorizontalGroup(
-            curvesMapLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 1079, Short.MAX_VALUE)
+            curvesMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 1079, Short.MAX_VALUE)
         );
         curvesMapLayout.setVerticalGroup(
-            curvesMapLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 244, Short.MAX_VALUE)
+            curvesMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 244, Short.MAX_VALUE)
         );
 
         curvesPanel.add(curvesMap, java.awt.BorderLayout.CENTER);
