@@ -27,6 +27,7 @@ import java.util.ArrayList;
 
 /**
  * The model object for the Flex Projector application. Holds all model data.
+ *
  * @author Bernhard Jenny, Institute of Cartography, ETH Zurich.
  */
 public class FlexProjectorModel extends GeoMap implements Serializable,
@@ -89,14 +90,14 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
         public double arealIsolinesEquidistance = 0.5;
         public QModel qModel = new QModel();
         /**
-         * An array containing the information displayed by the distortion table.
-         * Access to distParams must be synchronized as it is used by two threads.
-         * One thread is the Event Dispatching Thread, the other one is a SwingWorker
-         * thread that fills the table with distortion indices.
-         * Synchronization: synchronized (distParams) {...}
-         * Using a Vector that is internally synchronized instead of an ArrayList is
-         * not a solution, since the array is ordered by some external classes that
-         * do not synchronize Vectors.
+         * An array containing the information displayed by the distortion
+         * table. Access to distParams must be synchronized as it is used by two
+         * threads. One thread is the Event Dispatching Thread, the other one is
+         * a SwingWorker thread that fills the table with distortion indices.
+         * Synchronization: synchronized (distParams) {...} Using a Vector that
+         * is internally synchronized instead of an ArrayList is not a solution,
+         * since the array is ordered by some external classes that do not
+         * synchronize Vectors.
          */
         public final ArrayList<ProjectionDistortionParameters> distParams = new ArrayList();
         public final ProjectionDistortionParameters foreDist;
@@ -114,7 +115,6 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
             distParams.add(fdist);
             }
              */
-
             foreDist = new ProjectionDistortionParameters(designProjection, qModel);
             distParams.add(foreDist);
 
@@ -158,13 +158,14 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
      */
     private DisplayModel displayModel = new DisplayModel();
     /**
-     * A GeoSet with unprojected GeoPath coast lines (or whatever data are displayed).
+     * A GeoSet with unprojected GeoPath coast lines (or whatever data are
+     * displayed).
      */
-    private GeoSet unprojectedData = new GeoSet();
+    private final GeoSet unprojectedData = new GeoSet();
     /**
      * projected data (coast lines, graticule, etc) is stored in this GeoSet
      */
-    private GeoSet projectedDataDestination = new GeoSet();
+    private final GeoSet projectedDataDestination = new GeoSet();
 
     /**
      * Creates a new instance of FlexProjectorModel
@@ -200,7 +201,7 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
         this.secondAngleGrid.setNorth(north);
         this.secondAngleGrid.setWest(west);
 
-        this.displayModel.qModel.addQListener(this);
+        this.displayModel.qModel.addQListener(this); // FIXME
 
         AbstractMixerProjection[] mixerProjections = getMixerProjections();
         for (AbstractMixerProjection p : mixerProjections) {
@@ -214,17 +215,17 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
 
     private DesignProjection[] getDesignProjections() {
         return new DesignProjection[]{
-                    flexProjection,
-                    meanProjection,
-                    combinedProjection,
-                    flexMixProjection};
+            flexProjection,
+            meanProjection,
+            combinedProjection,
+            flexMixProjection};
     }
 
     private AbstractMixerProjection[] getMixerProjections() {
         return new AbstractMixerProjection[]{
-                    meanProjection,
-                    combinedProjection,
-                    flexMixProjection};
+            meanProjection,
+            combinedProjection,
+            flexMixProjection};
     }
 
     private boolean isMixableProjection(String name,
@@ -243,6 +244,7 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
 
     /**
      * Searches a projection to be used when the mixer is first started.
+     *
      * @param projToExclude Don't take this projection.
      */
     private Projection searchProjectionForMixer(Projection projToExclude,
@@ -250,8 +252,8 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
 
         String[] projNames = {"Eckert IV", "Winkel Tripel", "Robinson"};
         String name = projNames[0];
-        for (int i = 0; i < projNames.length; i++) {
-            name = projNames[i];
+        for (String projName : projNames) {
+            name = projName;
             if (isMixableProjection(name, projToExclude, mixer)) {
                 break;
             }
@@ -296,8 +298,8 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
     }
 
     /**
-     * Returns a FlexProjection. A shared instance of
-     * this.flexProjectionModel, not a copy.
+     * Returns a FlexProjection. A shared instance of this.flexProjectionModel,
+     * not a copy.
      */
     public FlexProjection getFlexProjection() {
         return flexProjection;
@@ -575,18 +577,14 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
     }
 
     public GeoSet constructProjectedCoastlines(Projection projection) {
-//        ika.utils.NanoTimer timer = new ika.utils.NanoTimer();
-//        long start = timer.nanoTime();
         GeoSet geoSet = (GeoSet) this.unprojectedData.clone();
         new GeoProjector(projection).project(geoSet);
-//        long end = timer.nanoTime();
-//        System.out.println("Projecting Coastlines: " + (end - start) / 1000 / 1000 + "ms");
         return geoSet;
     }
 
     /**
-     * Returns true if the graticule does not coincide with the outline of
-     * the projection, i.e. an outline must be generated.
+     * Returns true if the graticule does not coincide with the outline of the
+     * projection, i.e. an outline must be generated.
      */
     private boolean needsOutline(Projection projection) {
         // always return true to fix bug in the proejction of the outline
@@ -666,6 +664,7 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
      * Construct a rectangular bounding box around the outlines of the
      * projection. The bounding box includes the graticule and projected data,
      * but does not necesseraly include all Tissot indictrices.
+     *
      * @return A rectangular path including the graticule.
      */
     public GeoPath constructBoundingBox(Projection projection) {
@@ -707,8 +706,8 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
             return;
         }
 
-        final double d =
-                GeometryUtils.pointLineDistanceSquare(p3.x, p3.y, x1, y1, x2, y2);
+        final double d
+                = GeometryUtils.pointLineDistanceSquare(p3.x, p3.y, x1, y1, x2, y2);
         if (d > tolerance) {
             graticuleNextPoint(projection, lon1, lat1, lon3, lat3, x1, y1, p3.x, p3.y, projPath);
         } else {
@@ -719,6 +718,7 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
     /**
      * Construct a graticule (a projected regularly spaced grid). The graticule
      * is projected.
+     *
      * @return The projected graticule.
      */
     public GeoSet constructGraticule(Projection projection) {
@@ -775,13 +775,7 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
 
     /**
      * Constructs an array of Tissot indicatrices for the passed projection.
-     * Very small circles are constructed from straight lines. The circles are
-     * projected and then enlarged for display. This approach gives the
-     * indicatrices a more regular ellipse-like shape. It requires that all
-     * computations are done with doubles (and not floats). Also, the clipping
-     * along the outlines of the projection of GeoPath.project() cannot be used,
-     * since the ellipses are enlarged after projecting them.
-     *
+     * 
      * @param projection The projection for which indicatrices are constructed.
      * @return A GeoSet containing the indicatrices as GeoPath objects.
      */
@@ -805,81 +799,102 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
             // container for the coordinates of a projected point
             java.awt.geom.Point2D.Double projPt = new java.awt.geom.Point2D.Double();
 
-            // array holding the coordinates of an ellipse. This array will be
-            // reused for each ellipse. x1, y1, x2, y2, ...
-            double[] circlePts = new double[TISSOT_CIRCLE_POINT_COUNT * 2];
-
             // scale factor to convert from the unary sphere to earth coordinates
             final double scale = projection.getEquatorRadius();
 
             // scale factor to enlarge the small ellipses
-            final double indicatrixScale = TISSOT_SCALE * this.displayModel.tissotScale;
+            final double indicatrixScale
+                    = TISSOT_SCALE * this.displayModel.tissotScale;
 
             // the number of ellipses per hemisphere.
             final int l = (int) Math.floor(Math.PI / ellDist) + 1;
             final int r = (int) Math.ceil(Math.PI / ellDist) + 1;
 
+            ProjectionFactors projFactors = new ProjectionFactors();
+
             // construct the ellipses per columns, from left to right
-            for (int h = -l; h <= r; h++) {
+            for (int col = -l; col <= r; col++) {
 
                 // the longitude of the current column of ellipses
-                final double lon = -lon0 % ellDist + h * ellDist;
+                final double lon = -lon0 % ellDist + col * ellDist;
 
                 // make sure the longitude is in the range -pi..+pi
                 if (lon < -Math.PI - 0.0000001 || lon > Math.PI + 0.0000001) {
                     continue;
                 }
 
-                // construct a column of ellipses from bottom to top
-                for (int v = 1; v < nVertical; v++) {
+                // construct a column of indicatrices from bottom to top
+                // Tissot indicatrices cannot be computed for poles
+                for (int row = 1; row < nVertical; row++) {
 
-                    // the latitude of the current ellipse
-                    final double lat = -Math.PI / 2. + v * ellDist;
-
-                    // construct the circle in radians around lon/lat
-                    this.constructPlateCarreeCircle(lon, lat, circlePts);
-
-                    // compute the center of the indicatrix in earth coordinates
                     try {
-                        projection.project(lon, lat, projPt);
-                    } catch (ProjectionException exc) {
-                        continue;
-                    }
-                    final double cx = scale * projPt.x;
-                    final double cy = scale * projPt.y;
-                    if (Double.isNaN(cx) || Double.isNaN(cy)
-                            || Double.isInfinite(cx) || Double.isInfinite(cy)) {
-                        continue;
-                    }
+                        // the latitude of the current ellipse
+                        double lat = -Math.PI / 2 + row * ellDist;
 
-                    // project the small circle to an ellipse, enlarge it and
-                    // add each point to a new GeoPath.
-                    GeoPath ellipse = new GeoPath();
-                    for (int i = 0; i < circlePts.length / 2; i++) {
-                        // project the point
-                        try {
-                            projection.project(circlePts[i * 2], circlePts[i * 2 + 1], projPt);
-                        } catch (ProjectionException exc) {
+                        projFactors.compute(projection, lon, lat, 1e-5);
+
+                        ProjectionDerivatives der = new ProjectionDerivatives(projection, lon, lat, 1e-5);
+
+                        // compute Gaussian fundamental quantities E, F, G
+                        // Canters 1.8
+                        double E = der.E();
+                        double F = der.F();
+                        double G = der.G();
+
+                        // angle between meridian and parallel. Canters 1.17
+                        double sinthetap = Math.sqrt((E * G - F * F) / (E * G));
+
+                        // scales along meridian and parallel. Canters 1.11 and 1.12
+                        double h = der.h();
+                        double k = der.k(lat);
+
+                        // Snyder 4-12 and 4-13, p. 24. Scale factors.
+                        double a_ = Math.sqrt(h * h + k * k + 2 * h * k * sinthetap);
+                        double b_ = Math.sqrt(h * h + k * k - 2 * h * k * sinthetap);
+                        // Snyder 4-12a and 4-13a, p. 24
+                        double a = (a_ + b_) * 0.5;
+                        double b = (a_ - b_) * 0.5;
+
+                        // angle between meridians and parallels. Canters 1.16
+                        // sine of sinthetap would not be correct
+                        double thetap = Math.atan2(Math.sqrt(E * G - F * F), F);
+
+                        // angle between major axis and parallel. Canters 1.34
+                        double m = (1 - a * a / (k * k)) / (1 - a * a / (b * b));
+                        m = Math.min(1, Math.max(0, m));
+                        double alphap = Math.asin(Math.sqrt(m));
+                        
+                        // adjust sign. Canters p. 14 bottom and Fig. 1.5
+                        if (thetap < MapMath.HALFPI) {
+                            alphap = -alphap;
+                        }
+
+                        // angle between X-axis of map and parallel. Canters 1.36
+                        double thetapp = Math.atan2(der.y_l, der.x_l);
+
+                        // angle between X-axis and major axis. Canters 1.35
+                        double orient = thetapp - alphap;
+
+                        // compute the center of the indicatrix in Catesian coordinates
+                        projection.project(lon, lat, projPt);
+                        final double cx = scale * projPt.x;
+                        final double cy = scale * projPt.y;
+                        if (!Double.isFinite(cx) || !Double.isFinite(cy)) {
                             continue;
                         }
-                        // convert from the unary sphere to earth coordinates
-                        double x = scale * projPt.x;
-                        double y = scale * projPt.y;
 
-                        if (!Double.isNaN(x) && !Double.isNaN(y)
-                                && !Double.isInfinite(x) && !Double.isInfinite(y)) {
-                            // scale the point relative to the ellipse center
-                            x = (x - cx) * indicatrixScale + cx;
-                            y = (y - cy) * indicatrixScale + cy;
+                        // construct the ellipse
+                        GeoPath ellipse = GeoPath.newCircle(0, 0, (float) indicatrixScale);
+                        ellipse.scale(a, b);
+                        ellipse.rotate(orient);
 
-                            // add the point to the GeoPath
-                            ellipse.moveOrLineTo(x, y);
-                        }
+                        ellipse.move(cx, cy);
+                        geoSet.add(ellipse);
+
+                    } catch (ProjectionException exc) {
+                        System.err.println(exc);
                     }
 
-                    // close the ellipse and add it to the GeoSet
-                    ellipse.closePath();
-                    geoSet.add(ellipse);
                 }
             }
 
@@ -890,152 +905,6 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
         }
     }
 
-    /**
-     * Constructs a circle around lon/lat in Plate Carree projection. The 
-     * outline consists of straight line segments. 
-     * The number of points is TISSOT_CIRCLE_POINT_COUNT and the radius is
-     * TISSOT_CIRCLE_RADIUS.
-     * @param lon The horizontal coordinate of the center.
-     * @param lat The vertical coordinate of the center.
-     * @param circle An array that will receive the coordinates of the outline
-     * of the circle.
-     */
-    private void constructPlateCarreeCircle(double lon, double lat, double[] circle) {
-
-        final double angleIncrement = Math.PI * 2. / TISSOT_CIRCLE_POINT_COUNT;
-        for (int i = 0; i < TISSOT_CIRCLE_POINT_COUNT; i++) {
-            final double a = i * angleIncrement;
-            circle[i * 2] = lon + Math.cos(a) * TISSOT_CIRCLE_RADIUS / Math.cos(lat);
-            circle[i * 2 + 1] = lat + Math.sin(a) * TISSOT_CIRCLE_RADIUS;
-        }
-    }
-
-    /*
-    public GeoSet constructTissotIndicatrices(Projection projection) {
-
-    // remember the central meridian and set it to 0.
-    final double lon0 = projection.getProjectionLongitude();
-    projection.setProjectionLongitude(0);
-
-    try {
-    // the GeoSet that will contain all ellipses
-    GeoSet geoSet = new GeoSet();
-    geoSet.setName("Tissot's Indicatrices");
-
-    // the distance between the centers of two neighboring ellipses
-    final double ellDist = Math.toRadians(this.displayModel.tissotDensity);
-
-    // the number of ellipses in vertical direction
-    final int nVertical = (int)(Math.PI / ellDist) + 1;
-
-    // container for the coordinates of a projected point
-    java.awt.geom.Point2D.Double projPt = new java.awt.geom.Point2D.Double();
-
-    // scale factor to convert from the unary sphere to earth coordinates
-    final double scale = projection.getEquatorRadius();
-
-    // scale factor to enlarge the small ellipses
-    final double indicatrixScale
-    = TISSOT_SCALE * this.displayModel.tissotScale;
-
-    // the number of ellipses per hemisphere.
-    final int l = (int)Math.floor(Math.PI / ellDist) + 1;
-    final int r = (int)Math.ceil(Math.PI / ellDist) + 1;
-
-    ProjectionFactors projFactors = new ProjectionFactors();
-
-    // construct the ellipses per columns, from left to right
-    for (int col = -l; col <= r; col++) {
-
-    // the longitude of the current column of ellipses
-    final double lon = -lon0 % ellDist + col * ellDist;
-
-    // make sure the longitude is in the range -pi..+pi
-    if (lon < -Math.PI - 0.0000001 || lon > Math.PI + 0.0000001)
-    continue;
-
-    // construct a column of ellipses from bottom to top
-    for (int row = 0; row < nVertical; row++) {
-
-    try {
-    // the latitude of the current ellipse
-    final double lat = -Math.PI / 2. + row * ellDist;
-    final double coslat = Math.cos(lat);
-
-    projFactors.compute(projection, lon, lat, 1e-5);
-
-    ProjectionDerivatives der = new ProjectionDerivatives();
-    der.compute(projection, lon, lat, 1e-5);
-
-    // compute Gaussian fundamental quantities E, F, G
-    // Canters 1.8
-    final double E = der.x_p * der.x_p + der.y_p * der.y_p;
-    //final double F = der.x_p * der.x_l + der.y_p * der.y_l;
-    final double G = der.x_l * der.x_l + der.y_l * der.y_l;
-
-    // scales along meridian and parallel. Canters 1.11 1.12
-    final double h = Math.sqrt(E);
-    final double k = Math.sqrt(G) / coslat;
-
-    // angle between transformed meridian and parallel. Canters 1.17
-    final double sinthetap = (der.y_p*der.x_l - der.x_p*der.y_l) / (h * k * coslat); // Math.sqrt((E*G-F*F)/E*G);
-    final double thetap = Math.asin(sinthetap);
-
-    final double a_ = Math.sqrt(h*h + k*k + 2*h*k*sinthetap);
-    final double b_ = Math.sqrt(h*h + k*k - 2*h*k*sinthetap);
-    final double a = (a_ + b_) * 0.5;
-    final double b = (a_ - b_) * 0.5;
-
-    // simplify equations with t
-    //final double t = k * k + h * h;
-
-    // scale factors or lenght of major and minor axis a and b.
-    // Canters 1.26 and 1.13, p13 & 14
-    / final double a = Math.sqrt(0.5*(t+Math.sqrt(t*t-4*(h*h*k*k*sinthetap*sinthetap))));
-    // final double b = h * k * sinthetap / a;
-
-    // angle between major axis and parallel. Canters 1.34
-    final double m = Math.sqrt((1.-a*a/k*k) / (1.-a*a/b*b));
-    // final double m = Math.sqrt(b*b*(k*k-a*a)/(b*b-a*a))/k;
-    double alphap = Math.asin(m);//Math.abs(Math.asin(m));
-    if (thetap < MapMath.HALFPI)
-    alphap = -alphap;
-
-    // angle between X-axis and parallel. Canters 1.36
-    final double thetapp = Math.atan2(der.y_l, der.x_l);
-
-    // angle between X-axis and major axis. Canters 1.35
-    final double orient = thetapp - alphap;
-
-    // compute the center of the indicatrix in earth coordinates
-    projection.project(lon, lat, projPt);
-    final double cx = scale * projPt.x;
-    final double cy = scale * projPt.y;
-    if (Double.isNaN(cx) || Double.isNaN(cy)
-    || Double.isInfinite(cx) || Double.isInfinite(cy))
-    continue;
-
-    // construct the ellipse
-    GeoPath ellipse = GeoPath.newCircle(0, 0, (float)indicatrixScale);
-    ellipse.scale(Math.max(a, b), Math.min(a, b));
-    ellipse.rotate(orient);
-    ellipse.move(cx, cy);
-    geoSet.add(ellipse);
-
-    } catch (ProjectionException exc) {
-    continue;
-    }
-
-    }
-    }
-
-    return geoSet;
-    } finally {
-    // reset to the initial central meridian
-    projection.setProjectionLongitude(lon0);
-    }
-    }
-     */
     private void fillDistortionGrids(Projection projection,
             GeoGrid areaGrid, GeoGrid projGrid) {
 
@@ -1142,21 +1011,22 @@ public class FlexProjectorModel extends GeoMap implements Serializable,
                 labels.add(this.labelLines((GeoSet) geoObject));
             } else {
                 GeoPath line = (GeoPath) geoObject;
-                Point2D pt = line.getEndPoint();
-                String name = lines.getName();
+                if (line != null) {
+                    Point2D pt = line.getEndPoint();
+                    String name = lines.getName();
 
-                // try formatting the label if it is a number
-                try {
-                    GeoText text = new GeoText(name, pt.getX(), pt.getY(), 10, 0);
-                    text.setText(format.format(Double.parseDouble(name)));
-                    text.setScaleInvariant(true);
-                    text.setCenterVer(true);
-                    text.setCenterHor(false);
-                    labels.add(text);
-                } catch (Exception exc) {
-                    // do nothing.
+                    // try formatting the label if it is a number
+                    try {
+                        GeoText text = new GeoText(name, pt.getX(), pt.getY(), 10, 0);
+                        text.setText(format.format(Double.parseDouble(name)));
+                        text.setScaleInvariant(true);
+                        text.setCenterVer(true);
+                        text.setCenterHor(false);
+                        labels.add(text);
+                    } catch (Exception exc) {
+                        // do nothing.
+                    }
                 }
-
             }
         }
         return labels;
