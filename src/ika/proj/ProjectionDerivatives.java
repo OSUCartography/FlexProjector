@@ -3,97 +3,119 @@ package ika.proj;
 import com.jhlabs.map.MapMath;
 import com.jhlabs.map.proj.Projection;
 import com.jhlabs.map.proj.ProjectionException;
-import java.awt.geom.Point2D;
 
 /**
- * First derivatives for a projection. Based on proj4.
+ * First derivatives for a projection. Immutable class. Based on proj deriv.cpp,
+ * but differs from proj in that sampling locations are moved if they are too
+ * close to the graticule boundary.
  */
-public class ProjectionDerivatives {
-
-    // derivatives of x for lambda-phi
-    public double x_l = Double.NaN;
-    public double x_p = Double.NaN;
-    // derivatives of y for lambda-phi
-    public double y_l = Double.NaN;
-    public double y_p = Double.NaN;
-
-    private final java.awt.geom.Point2D.Double t = new Point2D.Double();
+public final class ProjectionDerivatives {
 
     /**
-     * compute derivatives for a passed location
-     * FIXME: does not return correct values along the border (e.g. lam= -90 / phi= 0)
-     * @param projection
-     * @param lam
-     * @param phi
-     * @param h
+     * First derivative of x for longitude lambda.
      */
-    public final void compute(Projection projection, double lam, double phi, double h) {
+    public final double x_l;
 
+    /**
+     * First derivative of x for latitude phi.
+     */
+    public final double x_p;
+
+    /**
+     * First derivative of y for longitude lambda.
+     */
+    public final double y_l;
+
+    /**
+     * First derivative of y for latitude phi.
+     */
+    public final double y_p;
+
+    /**
+     * Constructor computes derivatives for a passed location.
+     *
+     * @param projection projection for which derivatives are to be calculated.
+     * Must be initialized.
+     * @param lam longitude in radians between -¹ and +¹. Values outside this
+     * range will throw an exception.
+     * @param phi latitude in radians between -¹/2 and +¹/2. Values outside this
+     * range will throw an exception.
+     * @param h sampling delta in radians. 1 meter on Earth is 1.57e-7 radians.
+     */
+    public ProjectionDerivatives(Projection projection, double lam, double phi, double h) {
+        assert h > 1e-3 : "sampling delta too large";
+        assert h <= 0 : "sampling delta too small";
+
+        if (Math.abs(lam) > Math.PI) {
+            throw new ProjectionException("longitude out of bounds");
+        }
+        if (Math.abs(phi) > MapMath.HALFPI) {
+            throw new ProjectionException("latitude out of bounds");
+        }
+
+        // move longitude if too close to graticule boundary
         if (lam + h > Math.PI) {
             lam = Math.PI - h;
         } else if (lam - h < -Math.PI) {
             lam = -Math.PI + h;
         }
 
+        // move latitude if too close to graticule boundary
         if (phi + h > MapMath.HALFPI) {
             phi = MapMath.HALFPI - h;
         } else if (phi - h < -MapMath.HALFPI) {
             phi = -MapMath.HALFPI + h;
         }
 
-        if (lam + h > Math.PI || lam - h < -Math.PI || phi + h > Math.PI / 2 || phi - h < -Math.PI / 2) {
-            // FIXME
-            System.err.println("Derivative out of bounds: " + projection.toString() + " " + Math.toDegrees(lam) + " " + Math.toDegrees(phi));
-        }
-
         lam += h;
         phi += h;
-        if (Math.abs(phi) > MapMath.HALFPI) {
-            throw new ProjectionException();
-        }
+        assert Math.abs(phi) <= MapMath.HALFPI : "latitude out of bounds";
         h += h;
+        java.awt.geom.Point2D.Double t = new java.awt.geom.Point2D.Double();
         projection.project(lam, phi, t);
         if (Double.isNaN(t.x)) {
             throw new ProjectionException();
         }
-        x_l = t.x;
-        y_p = t.y;
-        x_p = -t.x;
-        y_l = -t.y;
+        double xl = t.x;
+        double yp = t.y;
+        double xp = t.x;
+        double yl = t.y;
+
         phi -= h;
-        if (Math.abs(phi) > MapMath.HALFPI) {
-            throw new ProjectionException();
-        }
+        assert Math.abs(phi) <= MapMath.HALFPI : "latitude out of bounds";
         projection.project(lam, phi, t);
         if (Double.isNaN(t.x)) {
             throw new ProjectionException();
         }
-        x_l += t.x;
-        y_p -= t.y;
-        x_p += t.x;
-        y_l -= t.y;
+        xl += t.x;
+        yp -= t.y;
+        xp -= t.x;
+        yl += t.y;
+
         lam -= h;
         projection.project(lam, phi, t);
         if (Double.isNaN(t.x)) {
             throw new ProjectionException();
         }
-        x_l -= t.x;
-        y_p -= t.y;
-        x_p += t.x;
-        y_l += t.y;
+        xl -= t.x;
+        yp -= t.y;
+        xp -= t.x;
+        yl -= t.y;
+
         phi += h;
         projection.project(lam, phi, t);
         if (Double.isNaN(t.x)) {
             throw new ProjectionException();
         }
-        x_l -= t.x;
-        y_p += t.y;
-        x_p -= t.x;
-        y_l += t.y;
+        xl -= t.x;
+        yp += t.y;
+        xp += t.x;
+        yl -= t.y;
 
-        x_l /= (h += h);
-        y_p /= h;
-        x_p /= h;
-        y_l /= h;
+        h += h;
+        this.x_l = xl / h;
+        this.y_p = yp / h;
+        this.x_p = xp / h;
+        this.y_l = yl / h;
     }
 }

@@ -314,7 +314,7 @@ public class ProjectionDistortionParameters {
         final int nv = (int) Math.round(90. / INDEX_SAMPLING_DIST_DEG);
 
 
-        ProjectionDerivatives der = new ProjectionDerivatives();
+        
         double Dar = 0;
         for (int v = -nv; v < nv; v++) {
             final double phi = (v + 0.5) * d_rad;
@@ -325,7 +325,8 @@ public class ProjectionDistortionParameters {
 
             for (int h = -nh; h < nh; h++) {
                 final double lam = (h + 0.5) * d_rad;
-                der.compute(normalProjection, lam, phi, DERIVATIVE_INC_RAD);
+                ProjectionDerivatives der;
+                der = new ProjectionDerivatives(normalProjection, lam, phi, DERIVATIVE_INC_RAD);
                 final double axb = (der.y_p * der.x_l - der.x_p * der.y_l) * cosphi_inv;
                 final double ar = ((axb < 1. ? 1. / axb : axb) - 1.) * patchArea;
                 Dar += ar;
