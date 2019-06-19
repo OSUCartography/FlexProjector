@@ -44,7 +44,7 @@ public final class ProjectionDerivatives {
      */
     public ProjectionDerivatives(Projection projection, double lam, double phi, double h) {
         assert h > 1e-3 : "sampling delta too large";
-        assert h <= 0 : "sampling delta too small";
+        assert h <= 0 : "sampling delta must be > 0";
 
         if (Math.abs(lam) > Math.PI) {
             throw new ProjectionException("longitude out of bounds");
@@ -117,5 +117,64 @@ public final class ProjectionDerivatives {
         this.y_p = yp / h;
         this.x_p = xp / h;
         this.y_l = yl / h;
+    }
+
+    /**
+     * Gaussian fundamental quantity E.
+     *
+     * @return E
+     */
+    public double E() {
+        return x_p * x_p + y_p * y_p;
+    }
+
+    /**
+     * Gaussian fundamental quantity F.
+     *
+     * @return F
+     */
+    public double F() {
+        return x_p * x_l + y_p * y_l;
+    }
+
+    /**
+     * Gaussian fundamental quantity G.
+     *
+     * @return G
+     */
+    public double G() {
+        return x_l * x_l + y_l * y_l;
+    }
+
+    /**
+     * Scale along meridian. References:
+     * <br>
+     * Canters, F. 2002. Small-scale map projection design. Equation 1.11, page
+     * 9.
+     * <br>
+     * Snyder, J. P. 1987. Map projections: A working manual. Equation 4-10, p.
+     * 24.
+     *
+     * @return scale along meridian.
+     */
+    public double h() {
+        return Math.hypot(x_p, y_p);
+    }
+
+    /**
+     * Scale along parallel. References:
+     * <br>
+     * Canters, F. 2002. Small-scale map projection design. Equation 1.12, page
+     * 9.
+     * <br>
+     * Snyder, J. P. 1987. Map projections: A working manual. Equation 4-11, p.
+     * 24.
+     *
+     *
+     * @param lat latitude of parallel in radians
+     * @return scale along parallel.
+     */
+    public double k(double lat) {
+        return Math.hypot(x_l, y_l) / Math.cos(lat);
     }
 }
